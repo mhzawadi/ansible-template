@@ -1,0 +1,31 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: "Waiting for instance ssh connection."
+      wait_for_connection:
+
+    - when: molecule_yml.driver.options.sethostname | d('yes') | bool
+      block:
+        - name: "Set instance hostname."
+          become: yes
+          hostname:
+            name: "{{ inventory_hostname }}"
+
+        - name: "Gather facts."
+          setup:
+
+        - name: "Remove workaround loopback from /etc/hosts file."
+          become: yes
+          lineinfile:
+            state: absent
+            path: /etc/hosts
+            regex: '^127\.0\.1\.1\s+\S+'
+
+        - name: "Add address and hostname to /etc/hosts file."
+          become: yes
+          lineinfile:
+            state: present
+            path: /etc/hosts
+            line: "{{ ansible_default_ipv4.address }} {{ ansible_hostname }}"

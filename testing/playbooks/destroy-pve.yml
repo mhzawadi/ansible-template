@@ -1,0 +1,46 @@
+---
+- name: Destroy
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - community.general
+  vars:
+      options: "{{ molecule_yml.driver.options }}"
+  tasks:
+    - name: "Load proxmox secrets."
+      include_vars: "{{ options.proxmox_secrets }}"
+      when: options.proxmox_secrets is defined
+      no_log: true
+
+    # Remove instances by numeric vmid instead of by name, which seems
+    # safer and more reliable. Since the Ansible lookup() plugin complains
+    # even when error=ingore is set, just create an empty file to ignore
+    # a missing instance_configs.
+    - name: "Check for instance configs."
+      stat:
+        path: "{{ molecule_instance_config }}"
+      register: instance_config_stat
+
+    - name: "Write empty instance configs."
+      copy:
+        content: "[]"
+        dest: "{{ molecule_instance_config }}"
+      when: not instance_config_stat.stat.exists
+
+    - name: "Remove molecule instance(s)."
+      community.general.proxmox_kvm:
+        api_host: "{{ api_host | d(options.api_host) | d(omit) }}"
+        api_user: "{{ api_user | d(options.api_user) | d(omit) }}"
+        api_password: "{{ api_password | d(options.api_password) | d(omit) }}"
+        api_token_id: "{{ api_token_id | d(options.api_token_id) | d(omit) }}"
+        api_token_secret: "{{ api_token_secret | d(options.api_token_secret) | d(omit) }}"
+        state: absent
+        vmid: "{{ i.vmid }}"
+        node: "{{ options.node }}"
+        force: yes
+        timeout: "{{ options.timeout | d(omit) }}"
+      loop: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
+      loop_control:
+        loop_var: i
+        label: "{{ i.instance, i.vmid }}"

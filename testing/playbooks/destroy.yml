@@ -1,0 +1,38 @@
+- name: build vms
+  hosts: localhost
+  become: false
+  vars_files:
+    - proxmox-root.yml
+  vars:
+    node: pve01
+  tasks:
+    - name: get running vms
+      ansible.builtin.command: qm list
+      delegate_to: pve.domain.com
+      register: vms
+
+    - name: Stop test KVM vm
+      community.general.proxmox_kvm:
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        api_host: "{{ api_host }}"
+        node: "{{ node }}"
+        vmid: "9010"
+        name: "molecule-test"
+        state: stopped
+        force: yes
+      when: vms is search("molecule.domain.com")
+
+    - name: Remove test KVM vm
+      community.general.proxmox_kvm:
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        api_host: "{{ api_host }}"
+        node: "{{ node }}"
+        vmid: "9010"
+        name: "molecule-test"
+        state: absent
+        force: yes
+      when: vms is search("molecule.domain.com")

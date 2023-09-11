@@ -1,0 +1,103 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  collections:
+    - community.general
+  vars:
+      options: "{{ molecule_yml.driver.options }}"
+  tasks:
+    - name: "Load proxmox secrets."
+      include_vars: "{{ options.proxmox_secrets }}"
+      when: options.proxmox_secrets is defined
+      no_log: true
+
+    - name: "Create molecule instance(s)."
+      community.general.proxmox_kvm:
+        state: present
+        api_host: "{{ api_host | d(options.api_host) | d(omit) }}"
+        api_user: "{{ api_user | d(options.api_user) | d(omit) }}"
+        api_password: "{{ api_password | d(options.api_password) | d(omit) }}"
+        api_token_id: "{{ api_token_id | d(options.api_token_id) | d(omit) }}"
+        api_token_secret: "{{ api_token_secret | d(options.api_token_secret) | d(omit) }}"
+        vmid: "{{ p.proxmox_template_vmid | d(p.template_vmid, true) | d(omit, true) }}"
+        clone: "{{ p.proxmox_template_name | d(p.template_name, true) | d(options.template_name, true) | d(p.box, true) | d('molecule', true) }}"
+        name: "{{ p.name }}"
+        node: "{{ options.node }}"
+        timeout: "{{ options.timeout | d(omit) }}"
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        loop_var: p
+        label: "{{ p.name }}"
+      register: proxmox_clone
+
+    - name: "Update molecule instance config(s)"
+      community.general.proxmox_kvm:
+        state: present
+        update: true
+        api_host: "{{ api_host | d(options.api_host) | d(omit) }}"
+        api_user: "{{ api_user | d(options.api_user) | d(omit) }}"
+        api_password: "{{ api_password | d(options.api_password) | d(omit) }}"
+        api_token_id: "{{ api_token_id | d(options.api_token_id) | d(omit) }}"
+        api_token_secret: "{{ api_token_secret | d(options.api_token_secret) | d(omit) }}"
+        vmid: "{{ rc.vmid }}"
+        node: "{{ options.node }}"
+        timeout: "{{ options.timeout | d(omit) }}"
+        ciuser: "{{ rc.p.ciuser | d(omit, true) }}"
+        cipassword: "{{ rc.p.cipassword | d(omit, true) }}"
+        citype: "{{ rc.p.citype | d(omit, true) }}"
+        ipconfig: "{{ rc.p.ipconfig | d(omit, true) }}"
+        nameservers: "{{ rc.p.nameservers | d(omit, true) }}"
+        searchdomains: "{{ rc.p.searchdomains | d(omit, true) }}"
+        sshkeys: "{{ rc.p.sshkeys | d(omit, true) }}"
+      when: >
+        rc.p.ciuser is defined or
+        rc.p.cipassword is defined or
+        rc.p.citype is defined or
+        rc.p.ipconfig is defined or
+        rc.p.nameservers is defined or
+        rc.p.searchdomains is defined or
+        rc.p.sshkeys is defined
+      loop: "{{ proxmox_clone.results }}"
+      loop_control:
+        loop_var: rc
+        label: "{{ rc.p.name, rc.vmid }}"
+
+    - name: "Start molecule instance(s)."
+      community.general.proxmox_qemu_agent:
+        api_host: "{{ api_host | d(options.api_host) | d(omit) }}"
+        api_user: "{{ api_user | d(options.api_user) | d(omit) }}"
+        api_password: "{{ api_password | d(options.api_password) | d(omit) }}"
+        api_token_id: "{{ api_token_id | d(options.api_token_id) | d(omit) }}"
+        api_token_secret: "{{ api_token_secret | d(options.api_token_secret) | d(omit) }}"
+        vmid: "{{ rc.vmid }}"
+        timeout: "{{ options.timeout | d(omit) }}"
+      loop: "{{ proxmox_clone.results }}"
+      loop_control:
+        loop_var: rc
+        label: "{{ rc.p.name, rc.vmid }}"
+      register: proxmox_qemu_agent
+
+    - name: "Populate instance configs."
+      ansible.builtin.set_fact:
+        instance_config:
+          instance: "{{ ra.rc.p.name }}"
+          address: "{{ ra.addresses[0] }}"
+          user: "{{ options.ssh_user | d('molecule') }}"
+          port: 22
+          identity_file: "{{ options.ssh_identity_file }}"
+          vmid: "{{ ra.vmid }}"
+      loop: "{{ proxmox_qemu_agent.results }}"
+      loop_control:
+        loop_var: ra
+        label: "{{ ra.rc.p.name, ra.vmid, ra.addresses[0] }}"
+      register: instance_configs
+
+    - set_fact:
+        instance_configs: "{{ instance_configs.results | map(attribute='ansible_facts.instance_config') | list }}"
+
+    - name: "Write instance configs."
+      ansible.builtin.copy:
+        content: "{{ instance_configs | to_nice_yaml }}"
+        dest: "{{ molecule_instance_config }}"

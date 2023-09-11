@@ -1,0 +1,21 @@
+---
+- name: build vms
+  hosts: localhost
+  become: false
+  vars_files:
+    - proxmox-root.yml
+  roles:
+    - role: manage-proxmox
+      vars:
+        node: pve
+        pve_domain: domain.com
+        pve_kvm_template:
+          - clone: template
+            vmid: 9000
+            newid: 9010
+            name: molecule
+            cores: 2
+            memory: 4096
+            storage: local
+            format: qcow2
+            mac: 'XX:XX:XX:XX:XX:XX'
