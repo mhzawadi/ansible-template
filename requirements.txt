@@ -5,8 +5,8 @@ cookiecutter
 docker
 docker-pycreds
 dockerpty
-molecule==5.0.1
-molecule-plugins==23.4.1
+molecule==5.1.0
+molecule-plugins==23.5.0
 PyMySQL
 vcd-cli
 passlib
