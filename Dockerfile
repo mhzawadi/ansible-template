@@ -1,7 +1,8 @@
 FROM python:3.10-bullseye
 LABEL Matthew Horwood <matt@horwood.biz>
 
-COPY requirements.* /ansible
+COPY requirements.txt /ansible/requirements.txt
+COPY requirements.yml /ansible/requirements.yml
 
 RUN apt-get update && \
     apt-get -y upgrade && \
