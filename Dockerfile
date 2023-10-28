@@ -10,6 +10,3 @@ RUN apt-get update && \
     useradd -d /ansible ansible && \
     python -m pip install -r /ansible/requirements.txt && \
     ansible-galaxy install -r /ansible/requirements.yml
-
-WORKDIR /ansible
-USER ansible
