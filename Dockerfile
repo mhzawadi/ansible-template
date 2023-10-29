@@ -1,4 +1,4 @@
-FROM python:3.10-bullseye
+FROM debian:11-slim
 LABEL Matthew Horwood <matt@horwood.biz>
 
 COPY requirements.txt /ansible/requirements.txt
