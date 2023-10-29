@@ -9,4 +9,6 @@ RUN apt-get update && \
     apt-get -y install python3-pip python3-wheel && \
     useradd -d /ansible ansible && \
     python -m pip install -r /ansible/requirements.txt && \
-    ansible-galaxy install -r /ansible/requirements.yml
+    ansible-galaxy install -r /ansible/requirements.yml; \
+    python -m pip cache purge; \
+    apt-get clean;
