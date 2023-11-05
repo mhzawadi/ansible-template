@@ -1,11 +1,11 @@
 pip
-ansible==6.7.0
+ansible==7.7.0
 ansible-lint
 cookiecutter
 docker
 docker-pycreds
 dockerpty
-molecule==5.1.0
+molecule==6.0.2
 molecule-plugins==23.5.0
 PyMySQL
 vcd-cli
