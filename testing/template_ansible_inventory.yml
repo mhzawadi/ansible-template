@@ -1,0 +1,20 @@
+---
+all:
+  hosts:
+{% for item in hosts %}
+    {{ item.instance }}: &id00{{ loop.index }}
+      ansible_host: {{ item.address }}
+      ansible_port: {{ item.port }}
+      ansible_private_key_file: {{ item.identity_file }}
+      ansible_ssh_common_args: -o UserKnownHostsFile=/dev/null -o ControlMaster=auto
+        -o ControlPersist=60s -o ForwardX11=no -o LogLevel=ERROR -o IdentitiesOnly=yes
+        -o StrictHostKeyChecking=no
+      ansible_user: {{ item.user }}
+      connection: ssh
+{% endfor %}
+ungrouped:
+  hosts:
+{% for nitem in hosts %}
+    {{ nitem.instance }}: *id00{{ loop.index }}
+{% endfor %}
+  vars: {}

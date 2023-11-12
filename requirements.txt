@@ -16,3 +16,4 @@ proxmoxer
 pre-commit
 awscliv2
 boto3
+jmespath

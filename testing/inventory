@@ -1,2 +1,2 @@
 [testing]
-molecule.ovh.rbx7.fra.horwood.biz ansible_ssh_private_key_file=~/.ssh/ansible_key ansible_host=192.168.1.2
+molecule.ovh.rbx7.fra.horwood.biz ansible_ssh_private_key_file=~/.ssh/home_root ansible_host=192.168.50.200

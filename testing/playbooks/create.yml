@@ -3,12 +3,12 @@
   hosts: localhost
   become: false
   vars_files:
-    - proxmox-root.yml
+    - "{{ top_dir }}/proxmox-root.yml"
   roles:
     - role: manage-proxmox
       vars:
-        node: pve
-        pve_domain: domain.com
+        node: proxmox
+        pve_domain: proxmox.host.local
         pve_kvm_template:
           - clone: template
             vmid: 9000

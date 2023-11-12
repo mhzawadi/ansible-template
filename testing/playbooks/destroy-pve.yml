@@ -6,12 +6,12 @@
   collections:
     - community.general
   vars:
-      options: "{{ molecule_yml.driver.options }}"
+    - node: proxmox
+    - molecule_instance_config: "{{ top_dir }}/testing/instance_config.yml"
+  vars_files:
+    - "{{ lookup('env', 'PWD') }}/molecule/default/molecule.yml"
+    - "{{ top_dir }}/proxmox-root.yml"
   tasks:
-    - name: "Load proxmox secrets."
-      include_vars: "{{ options.proxmox_secrets }}"
-      when: options.proxmox_secrets is defined
-      no_log: true
 
     # Remove instances by numeric vmid instead of by name, which seems
     # safer and more reliable. Since the Ansible lookup() plugin complains
@@ -22,25 +22,24 @@
         path: "{{ molecule_instance_config }}"
       register: instance_config_stat
 
-    - name: "Write empty instance configs."
-      copy:
-        content: "[]"
-        dest: "{{ molecule_instance_config }}"
-      when: not instance_config_stat.stat.exists
-
     - name: "Remove molecule instance(s)."
       community.general.proxmox_kvm:
-        api_host: "{{ api_host | d(options.api_host) | d(omit) }}"
-        api_user: "{{ api_user | d(options.api_user) | d(omit) }}"
-        api_password: "{{ api_password | d(options.api_password) | d(omit) }}"
-        api_token_id: "{{ api_token_id | d(options.api_token_id) | d(omit) }}"
-        api_token_secret: "{{ api_token_secret | d(options.api_token_secret) | d(omit) }}"
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        api_host: "{{ api_host }}"
+        node: "{{ node }}"
         state: absent
         vmid: "{{ i.vmid }}"
-        node: "{{ options.node }}"
         force: yes
-        timeout: "{{ options.timeout | d(omit) }}"
+        timeout: 500
       loop: "{{ lookup('file', molecule_instance_config) | from_yaml }}"
       loop_control:
         loop_var: i
         label: "{{ i.instance, i.vmid }}"
+      when: not instance_config_stat.stat.exists
+
+    - name: Write Molecule instance configs
+      copy:
+        dest: "{{ molecule_instance_config }}"
+        content: "{{ {} | to_yaml }}"

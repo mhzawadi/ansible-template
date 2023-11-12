@@ -2,13 +2,20 @@
   hosts: localhost
   become: false
   vars_files:
-    - proxmox-root.yml
+    - "{{ top_dir }}/proxmox-root.yml"
   vars:
-    node: pve01
+    node: proxmox
   tasks:
-    - name: get running vms
-      ansible.builtin.command: qm list
-      delegate_to: pve.domain.com
+    - name: is the test vm running
+      community.general.proxmox_kvm:
+        api_user: "{{ api_user }}"
+        api_token_id: "{{ api_token_id }}"
+        api_token_secret: "{{ api_token_secret }}"
+        api_host: "{{ api_host }}"
+        node: "{{ node }}"
+        vmid: "9010"
+        name: "molecule-test"
+        state: current
       register: vms
 
     - name: Stop test KVM vm
@@ -22,7 +29,12 @@
         name: "molecule-test"
         state: stopped
         force: yes
-      when: vms is search("molecule.domain.com")
+        timeout: 500
+      when: vms.status.find("running") != -1
+
+    - name: Pause for 10 seconds for shutdown
+      ansible.builtin.pause:
+        seconds: 10
 
     - name: Remove test KVM vm
       community.general.proxmox_kvm:
@@ -35,4 +47,4 @@
         name: "molecule-test"
         state: absent
         force: yes
-      when: vms is search("molecule.domain.com")
+        timeout: 500
