@@ -1,0 +1,13 @@
+-   id: ansible-lint
+    name: ansible-lint
+    description: This hook runs ansible-lint
+    entry: testing/lint.sh
+    language: python
+    pass_filenames: false
+    always_run: true
+    additional_dependencies:
+      # https://github.com/pre-commit/pre-commit/issues/1526
+      # If you want to use specific version of ansible-core or ansible, feel
+      # free to override `additional_dependencies` in your own hook config
+      # file.
+      - ansible-core>=2.13.3
