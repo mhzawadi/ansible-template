@@ -2,13 +2,10 @@ pip
 ansible==7.7.0
 ansible-lint
 cookiecutter
-docker
-docker-pycreds
-dockerpty
 molecule==6.0.2
 molecule-plugins==23.5.0
+molecule-proxmox
 PyMySQL
-vcd-cli
 passlib
 diceware
 pexpect
@@ -17,3 +14,4 @@ pre-commit
 awscliv2
 boto3
 jmespath
+detect-secrets
