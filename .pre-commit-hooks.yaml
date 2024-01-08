@@ -5,3 +5,10 @@
     language: script
     pass_filenames: false
     always_run: true
+-   id: molecule-test
+    name: molecule-test
+    description: This hook runs molecule test
+    entry: testing/molecule.sh
+    language: script
+    pass_filenames: false
+    always_run: true
