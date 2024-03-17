@@ -1,4 +1,4 @@
-FROM debian:11-slim
+FROM debian:12-slim
 LABEL Matthew Horwood <matt@horwood.biz>
 
 COPY requirements.txt /ansible/requirements.txt
