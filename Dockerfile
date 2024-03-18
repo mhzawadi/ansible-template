@@ -14,7 +14,7 @@ RUN apt-get update && \
 USER ansible
 WORKDIR /ansible
 RUN python3 -m venv .venv && \
-    source .venv/bin/activate && \
+    . .venv/bin/activate && \
     python3 -m pip install -r /ansible/requirements.txt && \
     ansible-galaxy install -r /ansible/requirements.yml; \
     python3 -m pip cache purge;
