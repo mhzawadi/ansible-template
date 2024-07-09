@@ -22,7 +22,8 @@ run_molecule() {
 
     cd $cwd
     cd $uniq_path/../..
-    ansible-lint -q .
+    echo "Lint role: $(echo $uniq_path | cut -f 2 -d "/")"
+    ansible-lint .
     EXITCODE=$?;
     if [ $EXITCODE -gt 0 ]; then
         exit 1
