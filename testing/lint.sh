@@ -45,7 +45,7 @@ while read fname; do
     # Is in a role? Get path and dissect it. Any path that has molecule.yml, add to list
     if [ $isrole == 0 ]; then
         fullpath=$(echo $fname | sed 's/^M //' | awk -F"/" '{print $1"/"$2}')
-        matches=$(find "$fullpath" -type f -name "molecule.yml")
+        matches=$(find "$fullpath" -type f -name "molecule.yml" | grep default)
         while read rname; do
           thispath=$(dirname $rname)
           PATHS+=($thispath)
