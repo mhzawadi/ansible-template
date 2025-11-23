@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    nagios_admin_pw: testing
+  tasks:
+    - name: "Include nagios"
+      include_role:
+        name: "nagios"

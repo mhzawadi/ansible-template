@@ -1,0 +1,5 @@
+---
+# defaults file for rsyslog
+mode: install
+rsyslog_packages:
+  - rsyslog

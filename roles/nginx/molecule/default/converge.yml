@@ -1,0 +1,19 @@
+---
+- name: Install
+  hosts: all
+  vars:
+    update_config: false
+    enable_all: false
+  tasks:
+    - name: "Include nginx"
+      include_role:
+        name: "nginx"
+
+- name: Test-home
+  hosts: all
+  vars:
+    update_config: false
+  tasks:
+    - name: "Include nginx"
+      include_role:
+        name: "nginx"

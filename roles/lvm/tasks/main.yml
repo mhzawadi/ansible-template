@@ -1,0 +1,59 @@
+---
+# tasks file for lvm
+- name: Update cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install parted
+  ansible.builtin.package:
+    name:
+      - "parted"
+      - "lvm2"
+    state: present
+
+- name: Create a new primary partition
+  community.general.parted:
+    device: "{{ item.physical_devices }}"
+    number: 1
+    state: present
+  loop: "{{ lvm_group }}"
+  when: lvm_group is defined
+
+- name: Create a volume group
+  community.general.lvg:
+    vg: "{{ item.lvm_group_name }}"
+    pvs: "{{ item.lvm_physical_devices }}"
+    state: present
+  loop: "{{ lvm_group }}"
+  when: lvm_group is defined
+
+- name: Create a logical volume
+  community.general.lvol:
+    vg: "{{ item.lvm_group_name }}"
+    lv: "{{ item.lvm_logical_volume_name }}"
+    pvs: "{{ item.lvm_physical_devices }}"
+    size: +100%FREE
+    state: present
+  loop: "{{ lvm_group }}"
+  when: lvm_group is defined
+
+# - name: show the logical volume status
+#   debug:
+#     var: make_lv
+
+- name: Create a ext4 filesystem
+  community.general.filesystem:
+    fstype: ext4
+    dev: "/dev/{{ item.lvm_group_name }}/{{ item.lvm_logical_volume_name }}"
+  loop: "{{ lvm_group }}"
+  when: lvm_group is defined
+
+- name: Mount LVM
+  ansible.posix.mount:
+    path: "{{ item.lvm_mount_point }}"
+    src: "/dev/{{ item.lvm_group_name }}/{{ item.lvm_logical_volume_name }}"
+    fstype: ext4
+    opts: 'noatime'
+    state: mounted
+  loop: "{{ lvm_group }}"
+  when: lvm_group is defined

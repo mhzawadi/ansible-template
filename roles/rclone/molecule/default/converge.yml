@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    rclone_arch: amd64
+    rclone_b2_account: q5af38socj2v4s2or4
+    rclone_b2_key: XbqJXG2f6kcNkGC3UXWenQ
+    rclone_b2_endpoint: s3.us-west-002.backblazeb2.com
+  tasks:
+    - name: "Include rclone"
+      include_role:
+        name: "rclone"

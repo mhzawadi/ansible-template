@@ -1,0 +1,7 @@
+---
+# defaults file for iptables
+iptables_rules: []
+ip6tables_rules: []
+iptables_ssh_port:
+iptables_ports: []
+ip6tables_nets: []

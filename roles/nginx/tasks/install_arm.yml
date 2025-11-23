@@ -1,0 +1,40 @@
+---
+# tasks file for nginx
+- name: ARM - Installs pre requs
+  ansible.builtin.apt:
+    pkg: ['apt-transport-https']
+    state: present
+
+- name: ARM - set up the apt repository
+  ansible.builtin.lineinfile:
+    dest: /etc/apt/sources.list.d/php.list
+    line: "deb  {{ ansible_distribution_release }} main"
+    create: yes
+    owner: root
+    mode: 0755
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: ARM - import an official php signing key
+  ansible.builtin.apt_key:
+    id: 15058500A0235D97F5D10063B188E2B695BD4743
+    url: https://packages.sury.org/nginx/apt.gpg
+    state: present
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: ARM - Setup deb822 formatted repositorie
+  ansible.builtin.deb822_repository:
+    name: php
+    types: deb
+    uris: https://packages.sury.org/nginx/
+    components: nginx
+    suites: "{{ ansible_distribution_release }} "
+    signed_by: https://packages.sury.org/nginx/apt.gpg
+    state: present
+    enabled: true
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version >= '13')
+
+- name: ARM - install nginx
+  ansible.builtin.apt:
+    pkg: nginx-core
+    update_cache: yes
+    state: present

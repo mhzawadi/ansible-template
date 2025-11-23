@@ -1,0 +1,58 @@
+---
+# tasks file for nagios-config
+# - name: set htpasswd
+#   htpasswd:
+#     path: /etc/nginx/passwdfile
+#     name: nagiosadmin
+#     password: "{{ nagios_web_password }}"
+#     owner: nagios
+#     group: nagios
+#     mode: 0644
+#
+# - name: copy check_snmp_process to host
+#   get_url:
+#     url: "https://raw.githubusercontent.com/nickjeffrey/check_snmp_process/main/check_snmp_process"
+#     dest: "/usr/local/nagios/libexec/"
+
+# - name: copy FPM check
+#   get_url:
+#     url: "https://raw.githubusercontent.com/regilero/check_phpfpm_status/master/check_phpfpm_status.pl"
+#     dest: "/usr/local/nagios/libexec/"
+
+# - name: extra snmp checks
+#   unarchive:
+#     remote_src: yes
+#     src: "http://nagios.proy.org/nagios-snmp-plugins.1.1.1.tgz"
+#     dest: "/usr/local/nagios/libexec/"
+
+- name: Copy check_ncpa to host
+  ansible.builtin.unarchive:
+    remote_src: yes
+    src: "https://assets.nagios.com/downloads/ncpa/check_ncpa.tar.gz"
+    dest: "/usr/local/nagios/libexec/"
+
+- name: Copy up checks
+  ansible.builtin.copy:
+    src: files/checks/
+    dest: /usr/local/nagios/libexec/
+    mode: 0755
+    owner: nagios
+    follow: yes
+
+- name: Copy up nagios etc
+  ansible.builtin.copy:
+    src: files/nagios
+    dest: /etc
+    mode: 0644
+    owner: nagios
+    decrypt: false
+
+- name: Copy up logos
+  ansible.builtin.copy:
+    src: files/logos
+    dest: /usr/local/nagios/share/images
+    mode: 0644
+    owner: nagios
+
+- name: Reload config
+  ansible.builtin.import_tasks: "reload.yml"

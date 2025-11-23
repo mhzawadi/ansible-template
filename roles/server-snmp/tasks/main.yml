@@ -1,0 +1,36 @@
+---
+# tasks file for server-snmp
+- name: Install SNMP
+  ansible.builtin.apt:
+    pkg: "{{ snmpd_apt }}"
+    update_cache: yes
+    state: present
+
+- name: Change SNMP logging level
+  ansible.builtin.lineinfile:
+    dest: /etc/default/snmpd
+    regexp: '^SNMPDOPTS='
+    line: 'SNMPDOPTS="-LS0-4d -Lf /dev/null -u Debian-snmp -g Debian-snmp -I -smux,mteTrigger,mteTriggerConf -p /run/snmpd.pid"'
+
+- name: Change systemd SNMP logging level
+  ansible.builtin.lineinfile:
+    dest: /lib/systemd/system/snmpd.service
+    regexp: '^ExecStart='
+    line: 'ExecStart=/usr/sbin/snmpd -LS0-4d -Lf /dev/null -u Debian-snmp -g Debian-snmp -I -smux,mteTrigger,mteTriggerConf -f'
+  when: ansible_distribution_version >= "9"
+
+- name: Comment out MIBs
+  ansible.builtin.lineinfile:
+    dest: /etc/snmp/snmp.conf
+    regexp: '^mibs'
+    line: '#mibs :'
+
+- name: Template snmpd.conf
+  ansible.builtin.template:
+    src: templates/snmpd.conf.j2
+    dest: /etc/snmp/snmpd.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify:
+    - Start snmpd service

@@ -1,0 +1,6 @@
+---
+# defaults file for rclone
+rclone_arch: amd64
+# rclone_arch: arm-v7
+# rclone_arch: arm64
+rclone_b2_endpoint:

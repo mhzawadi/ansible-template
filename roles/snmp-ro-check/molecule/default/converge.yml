@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include snmp-ro-check"
+      include_role:
+        name: "snmp-ro-check"

@@ -1,0 +1,36 @@
+---
+# tasks file for smallstep-ca
+- name: Insall SmallStep CA
+  ansible.builtin.apt:
+    deb: "https://github.com/smallstep/certificates/releases/download/v{{ stepca_version }}/step-ca_{{ stepca_version }}-1_amd64.deb"
+    update_cache: yes
+  when:
+    ansible_architecture == 'x86_64'
+
+- name: Create step-ca in roots home
+  ansible.builtin.file:
+    path: /root/step-ca
+    state: directory
+    mode: '0755'
+
+- name: Create step-ca in etc
+  ansible.builtin.file:
+    path: "{{ stepca_path }}"
+    state: directory
+    mode: '0700'
+
+- name: Template
+  ansible.builtin.template:
+    src: templates/init_ca.sh
+    dest: /tmp/init_ca.sh
+    mode: '0755'
+
+- name: Run init_ca.sh
+  ansible.builtin.command: /tmp/init_ca.sh
+  args:
+    creates: /etc/step-ca/config/ca.json
+  register: ca_data
+
+- name: Show me your data
+  ansible.builtin.debug:
+    var: ca_data

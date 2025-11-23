@@ -1,0 +1,40 @@
+---
+# tasks file for server-apcupsd
+- name: Installs APCUPS
+  ansible.builtin.apt:
+    pkg: "{{ apc_debs }}"
+    update_cache: true
+    state: present
+
+- name: Start fcgiwrap service
+  ansible.builtin.service:
+    name: fcgiwrap
+    enabled: yes
+    state: started
+
+- name: Upload config offbattery
+  ansible.builtin.copy:
+    src: files/offbattery
+    dest: /etc/apcupsd/offbattery
+    owner: root
+    mode: 0755
+
+- name: Upload config onbattery
+  ansible.builtin.copy:
+    src: files/onbattery
+    dest: /etc/apcupsd/onbattery
+    owner: root
+    mode: 0755
+
+- name: Upload config apcupsd
+  ansible.builtin.copy:
+    src: files/apcupsd.conf
+    dest: /etc/apcupsd/apcupsd.conf
+    owner: root
+    mode: 0755
+
+- name: Start apcupsd service
+  ansible.builtin.service:
+    name: apcupsd
+    enabled: yes
+    state: started

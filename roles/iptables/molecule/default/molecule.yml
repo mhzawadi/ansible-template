@@ -1,0 +1,18 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: molecule-proxmox
+  options:
+    # Secrets file may be encrypted with ansible-vault.
+    proxmox_secrets: ${ANSIBLE_HOME}/proxmox.yml
+    node: pve02
+    template_name: template
+    timeout: 500
+    ssh_user: root
+    ssh_identity_file: ${SSH_IDENTITY_FILE}
+platforms:
+  - name: iptables
+    template_name: template
+provisioner:
+  name: ansible

@@ -1,0 +1,77 @@
+---
+- name: Create sites dirs if they don't exist
+  ansible.builtin.file:
+    path: /srv/nginx/tmp\
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Create sites dirs if they don't exist
+  ansible.builtin.file:
+    path: /etc/nginx/sites-available
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Create sites dirs if they don't exist
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Rebuild config run
+  ansible.builtin.import_tasks: rebuild_config.yml
+
+- name: Copy up main config
+  ansible.builtin.copy:
+    src: files/nginx.conf
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    mode: 0755
+  when:
+     nginx_config is defined
+
+- name: Copy up dhparams
+  ansible.builtin.copy:
+    src: files/dhparams.pem
+    dest: /etc/nginx/dhparams.pem
+    owner: root
+    mode: 0755
+  when:
+     nginx_config is defined
+
+- name: "Copy up sites for {{ nginx_config }}"
+  ansible.builtin.copy:
+    src: files/{{ nginx_config }}/sites/
+    dest: /etc/nginx/sites-available/
+    owner: root
+    mode: 0755
+  when:
+     nginx_config is defined
+
+- name: "Copy up conf.d for {{ nginx_config }}"
+  ansible.builtin.copy:
+    src: files/{{ nginx_config }}/config/
+    dest: /etc/nginx/conf.d/
+    owner: root
+    mode: 0755
+  when:
+     nginx_config is defined
+
+- name: Find site files
+  ansible.builtin.find:
+    paths: /etc/nginx/sites-available
+    patterns: '*.conf'
+  register: conf_files
+
+- name: Link the files to sites enabled
+  ansible.builtin.file:
+    src: "{{ item.path }}"
+    dest: "/etc/nginx/sites-enabled/{{ item.path | basename }}"
+    state: link
+  with_items:
+    - "{{ conf_files.files }}"
+  when:
+    - enable_all
+    - conf_files.matched != 0

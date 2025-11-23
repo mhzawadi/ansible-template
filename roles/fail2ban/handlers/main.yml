@@ -1,0 +1,7 @@
+---
+# handlers file for fail2ban
+- name: Reload fail2ban service
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: restarted

@@ -1,0 +1,15 @@
+---
+# tasks file for snmp-ro-check
+- name: Create scripts folder
+  ansible.builtin.file:
+    path: /usr/lib/nagios/plugins
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Copy up script
+  ansible.builtin.copy:
+    src: files/read-only.sh
+    dest: /usr/lib/nagios/plugins/read-only.sh
+    owner: root
+    mode: 0755

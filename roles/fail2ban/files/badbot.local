@@ -1,0 +1,6 @@
+[Definition]
+
+failregex = <HOST> - .*[^"].*compatible.*bot.*[^"];
+            (?i)<HOST> - .*[^"].*compatible.*bot.*[^"]
+
+ignoreregex =

@@ -1,0 +1,7 @@
+---
+# vars file for server-apcupsd
+apc_debs:
+    - apcupsd
+    - apcupsd-cgi
+    - apcupsd-doc
+    - fcgiwrap

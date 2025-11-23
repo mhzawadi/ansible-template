@@ -1,0 +1,4 @@
+---
+# defaults file for mysql
+mysql_root_hash: '*2470C0C06DEE42FD1618BB99005ADCA2EC9D1E19'
+mysql_root_password: 'password'

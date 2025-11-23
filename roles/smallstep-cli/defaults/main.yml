@@ -1,0 +1,3 @@
+---
+# defaults file for smallstep-cli
+stepcli_version: '0.28.2'

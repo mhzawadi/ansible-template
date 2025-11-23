@@ -1,0 +1,21 @@
+---
+# vars file for common
+common_debs:
+  - bsd-mailx
+  - curl
+  - git
+  - logwatch
+  - nfs-common
+  - nullmailer
+  - pipx
+  - python3-pip
+  - python3-setuptools
+  - python3-wheel
+  - screen
+  - sudo
+  - unattended-upgrades
+  - zip
+
+common_pi:
+  - rpi-update
+  - raspi-config

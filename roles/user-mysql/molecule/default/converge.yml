@@ -1,0 +1,79 @@
+---
+- name: Converge
+  become: true
+  hosts: all
+  roles:
+    # Thing I want to test
+    - name: add users
+      role: user-mysql
+      vars:
+        user_profiles:
+          - username: ml2
+            sudo_hash: password
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: <SSHKEY>
+            devops: false
+            mysqlRW: false
+            sudo: false
+            state: present
+          - username: ml3
+            sudo_hash: password
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: <SSHKEY>
+            devops: false
+            mysqlRW: true
+            sudo: false
+            state: present
+          - username: ml4
+            sudo_hash: password
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: <SSHKEY>
+            devops: true
+            mysqlRW: false
+            sudo: false
+            state: present
+    - name: add service_name
+      role: user-mysql
+      vars:
+        iaptus_service_users:
+          - username: service_name
+            password: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            database: IAPTus_Service1
+            allowedhost: 10.3.200.%
+            hostgroup:    1
+    - role: user-mysql
+      vars:
+        user_profiles:
+          - username: ml1
+            sudo_hash: password
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: <SSHKEY>
+            devops: false
+            mysqlRW: false
+            state: absent
+  vars:
+    mysql_root_password: "password"
+    mysql_admin: "root"
+    mysql_adminPW: "password"
+    mysql_host: "127.0.0.1"
+- name: test for global user RW
+  become: true
+  hosts: all
+  roles:
+    # Thing I want to test
+    - role: user-mysql
+      vars:
+        user_profiles:
+          - username: ml5
+            sudo_hash: password
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: <SSHKEY>
+            devops: false
+            mysqlRW: false
+            state: present
+  vars:
+    mysql_root_password: "password"
+    mysql_admin: "root"
+    mysql_adminPW: "password"
+    mysql_host: "127.0.0.1"
+    mysql_userRW: true

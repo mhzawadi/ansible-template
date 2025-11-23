@@ -1,0 +1,17 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+  - name: Check if drives are already mounted
+    command: '/bin/mountpoint -q /mnt/data'
+    register: lvm_checked
+    changed_when: false
+
+  - name: Are they on the box
+    assert:
+      that: "lvm_checked.rc == 0"
+      fail_msg: "LVM setup failed"
+      success_msg: "LVM setup and disk mounted"

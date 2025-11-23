@@ -1,0 +1,27 @@
+---
+- name: "Install the rsyslog package"
+  ansible.builtin.package:
+    name: "{{ rsyslog_packages }}"
+    state: present
+
+- name: "Ensure the rsyslogd service is running and enabled"
+  ansible.builtin.service:
+    name: rsyslog
+    state: started
+    enabled: true
+
+- name: "Ensure that journald is configured to forward its logs to rsyslog"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: '^#?ForwardToSyslog='
+    line: 'ForwardToSyslog=yes'
+    state: present
+  notify: Restart the journald service
+
+- name: "Disable storage of logs by journald"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: '^#?Storage='
+    line: 'Storage=none'
+    state: present
+  notify: Restart the journald service

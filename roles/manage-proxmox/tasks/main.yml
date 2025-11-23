@@ -1,0 +1,115 @@
+---
+# tasks file for manage-proxmox
+- name: Build LXC container
+  community.general.proxmox:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item.vmid }}"
+    memory: "{{ item.memory }}"
+    password: "{{ item.password }}"
+    hostname: "{{ item.hostname }}.{{ pve_domain }}"
+    ostemplate: "{{ item.ostemplate }}"
+    netif: "{{ item.netif }}"
+    disk: "{{ item.disk }}"
+    pubkey: "{{ item.pubkey }}"
+    nameserver: "{{ item.nameserver }}"
+    searchdomain: "{{ item.searchdomain }}"
+    cores: 1
+    cpus: 1
+    cpuunits: 1
+    onboot: no
+    swap: 0
+    features:
+      - nesting=1
+    unprivileged: true
+  with_items: "{{ pve_lxc_template }}"
+
+- name: Boot LXC container
+  community.general.proxmox:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item.vmid }}"
+    state: started
+  with_items: "{{ pve_lxc_template }}"
+
+- name: Build KVM vm
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    node: "{{ node }}"
+    clone: "{{ item.clone }}"
+    vmid: "{{ item.vmid }}"
+    newid: "{{ item.newid }}"
+    name: "{{ item.name }}.{{ pve_domain }}"
+    storage: "{{ item.storage }}"
+    format: "{{ item.format }}"
+    timeout: 500  # Note: The task can take a while. Adapt
+  with_items: "{{ pve_kvm_template }}"
+
+- name: Set CPU and Memory
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item.newid }}"
+    cores: "{{ item.cores }}"
+    memory: "{{ item.memory }}"
+    boot: "order=scsi0;net0;ide2"
+    cpu: host
+    update: true
+  with_items: "{{ pve_kvm_template }}"
+
+- name: Set Nic MAC address
+  community.general.proxmox_nic:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    vmid: "{{ item.newid }}"
+    interface: net0
+    bridge: vmbr1
+    mac: "{{ item.mac }}"
+    firewall: true
+  with_items: "{{ pve_kvm_template }}"
+  when:
+    - item.mac
+
+- name: Create new disk in VM (do not rewrite in case it exists already)
+  community.general.proxmox_disk:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    vmid: "{{ item.newid }}"
+    name: "{{ item.extradisk[0].name }}-{{ item.name }}.{{ pve_domain }}"
+    disk: "{{ item.extradisk[0].disk }}"
+    cache: writeback
+    format: qcow2
+    storage: local
+    size: "{{ item.extradisk[0].size }}"
+    discard: "{{ item.extradisk[0].discard }}"
+    state: present
+  with_items: "{{ pve_kvm_template }}"
+  when:
+    - item.extradisk
+
+- name: Boot KVM vm
+  community.general.proxmox_kvm:
+    api_user: "{{ api_user }}"
+    api_token_id: "{{ api_token_id }}"
+    api_token_secret: "{{ api_token_secret }}"
+    api_host: "{{ api_host }}"
+    node: "{{ node }}"
+    vmid: "{{ item.newid }}"
+    state: started
+  with_items: "{{ pve_kvm_template }}"

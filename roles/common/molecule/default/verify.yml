@@ -1,0 +1,26 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+    - name: Check things got installed
+      assert:
+        that: "'git' in ansible_facts.packages"
+        fail_msg: "missing git package"
+        success_msg: "Git got installed"
+
+    - name: Check for root tools
+      stat:
+        path: /root/bin/mqtt
+      register: register_name
+
+    - name: Are they on the box
+      assert:
+        that: register_name.stat.exists
+        fail_msg: "that didnt unzip"
+        success_msg: "Root got his tools"

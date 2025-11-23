@@ -1,0 +1,72 @@
+#!/bin/bash
+STATE_OK=0
+STATE_WARNING=1
+STATE_CRITICAL=2
+STATE_UNKNOWN=3
+STATE_DEPENDENT=4
+blank=""
+usage1="Usage: $0 -H <host> -u <ups> -v <variable> -w <warn> -c <crit>"
+exitstatus=$STATE_WARNING #default
+while test -n "$1"; do
+    case "$1" in
+        -c)
+            crit=$2
+            shift
+            ;;
+        -w)
+            warn=$2
+            shift
+            ;;
+        -u)
+            ups=$2
+            shift
+            ;;
+        -v)
+            variable=$2
+            shift
+            ;;
+        -h)
+            echo $usage1;
+            echo
+            exit $STATE_UNKNOWN
+	    ;;
+	-H)
+            host=$2
+            shift
+            ;;
+        *)
+            echo "Unknown argument: $1"
+            echo $usage1;
+	    echo
+            exit $STATE_UNKNOWN
+            ;;
+    esac
+    shift
+done
+
+value=`/bin/upsc $ups@$host $variable`
+
+echo $ups@$host - $variable = $value
+
+#conversion to integer
+value=${value/\.*}
+
+# if blank, warning
+if [ $value = $blank ]; then
+	exit $STATE_WARNING;
+fi
+
+#c<value<=w
+if [ $value -gt $crit ]; then
+	if [ $value -le $warn ]; then
+		exit $STATE_WARNING;
+	fi
+fi
+if [ $value -le $crit ]; then
+	exit $STATE_CRITICAL;
+fi
+
+# value>warn
+if [ $value -gt $warn ]; then
+exit $STATE_OK;
+fi

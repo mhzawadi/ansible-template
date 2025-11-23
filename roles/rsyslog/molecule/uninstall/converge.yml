@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: "Include rsyslog-install in uninstall mode"
+      ansible.builtin.include_role:
+        name: "rsyslog-install"
+      vars:
+        mode: uninstall

@@ -1,0 +1,48 @@
+---
+# tasks file for mysql
+- name: Mysql | Install MySQL Packages
+  ansible.builtin.apt:
+    pkg: ['mariadb-server', 'mariadb-client', 'python3-mysqldb', 'mariadb-backup']
+    update_cache: true
+    state: present
+
+- name: Update MySQL Configuration
+  ansible.builtin.template:
+    src: "templates/my.cnf.j2"
+    dest: "/etc/mysql/mariadb.conf.d/50-server.cnf"
+    mode: 0644
+
+- name: Start mysql service
+  ansible.builtin.service:
+    name: mysql
+    enabled: yes
+    state: started
+
+- name: "Adding Admin MySQL user to 127.0.0.1"
+  community.mysql.mysql_user:
+    login_user: "root"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+    login_password: "{{ mysql_root_password }}"
+    name: "root"
+    host: '127.0.0.1'
+    password: "{{ mysql_root_hash }}"
+    encrypted: true
+    priv: '*.*:ALL,GRANT'
+    state: present
+    column_case_sensitive: true
+
+- name: "Adding Admin MySQL user to localhost"
+  community.mysql.mysql_user:
+    login_user: "root"
+    login_unix_socket: "/var/run/mysqld/mysqld.sock"
+    login_password: "{{ mysql_root_password }}"
+    name: "root"
+    host: 'localhost'
+    password: "{{ mysql_root_hash }}"
+    encrypted: true
+    priv: '*.*:ALL,GRANT'
+    state: present
+    column_case_sensitive: true
+
+# CREATE USER [IF NOT EXISTS] root@127.0.0.1 IDENTIFIED BY '*6B4F89A54E2D27ECD7E8DA05B4AB8FD9D1D8B119';
+# GRANT ALL ON *.* TO root@127.0.0.1 WITH GRANT OPTION;

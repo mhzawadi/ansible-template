@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    ip6tables_nets:
+      - net: ::1
+    iptables_nets:
+      - net: 192.168.1.1/32
+  tasks:
+    - name: "Include iptables"
+      include_role:
+        name: "iptables"

@@ -1,0 +1,39 @@
+---
+# tasks file for users
+- name: Remove Pi from groups
+  ansible.builtin.user:
+    name: pi
+    shell: /usr/sbin/nologin
+    password_lock: yes
+    state: present
+    group: users
+  when:
+    - user_pi
+
+- name: Add new user
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    password: "{{ item.password }}"
+    shell: /bin/bash
+    state: present
+    group: users
+  with_items: "{{ users_list }}"
+
+- name: Generate an SSH key
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    generate_ssh_key: "{{ item.gen_ssh_key }}"
+    ssh_key_bits: 4096
+    ssh_key_file: ".ssh/{{ ansible_hostname }}"
+    state: present
+  with_items: "{{ users_list }}"
+  when: item.gen_ssh_key
+
+- name: Setup ssh key
+  ansible.posix.authorized_key:
+    user: "{{ item.name }}"
+    key: "{{ item.ssh_key }}"
+    state: "present"
+  with_items: "{{ users_list }}"
+  when:
+    item.ssh_key

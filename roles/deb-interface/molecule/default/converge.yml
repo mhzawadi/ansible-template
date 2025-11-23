@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    interface_ipv6_address: "fe80::cc83:79ff:fe6a:1553/64"
+    interface_ipv6_gateway: "fe80::/64"
+  tasks:
+    - name: "Include deb-interface"
+      include_role:
+        name: "deb-interface"

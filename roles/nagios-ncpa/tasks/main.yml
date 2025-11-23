@@ -1,0 +1,63 @@
+---
+# tasks file for nagios-ncpa
+- name: (ARM32) Install nagios_ncpa
+  ansible.builtin.apt:
+    deb: "http://deb.horwood.biz/nagios/ncpa/ncpa-latest.armhf.deb"
+    update_cache: true
+    state: present
+  when:
+    ansible_architecture == 'armv7l'
+
+- name: (ARM64) Install nagios_ncpa
+  ansible.builtin.apt:
+    deb: "https://github.com/mhzawadi/ncpa/releases/download/v{{ nagios_ncpa_version }}/ncpa_{{ nagios_ncpa_version }}-1_arm64.deb"
+    update_cache: true
+    state: present
+  when:
+    ansible_architecture == 'aarch64'
+
+- name: (AMD64) Install nagios_ncpa
+  ansible.builtin.apt:
+    deb: "https://assets.nagios.com/downloads/ncpa3/ncpa-{{ nagios_ncpa_version }}.amd64.deb"
+    update_cache: true
+    state: present
+  when:
+    ansible_architecture == 'x86_64'
+
+- name: Install nagios plugins
+  ansible.builtin.apt:
+    name: ['nagios-plugins-contrib', 'nagios-snmp-plugins']
+    state: present
+    update_cache: yes
+
+- name: Set API key
+  ansible.builtin.lineinfile:
+    path: /usr/local/ncpa/etc/ncpa.cfg
+    regexp: '^community_string '
+    line: "community_string = {{ nagios_ncpa_api_key }}"
+    state: present
+
+- name: Set nagios plugins
+  ansible.builtin.lineinfile:
+    path: /usr/local/ncpa/etc/ncpa.cfg
+    regexp: '^plugin_path '
+    line: "plugin_path = /usr/lib/nagios/plugins/"
+    state: present
+
+- name: Copy up checks
+  ansible.builtin.copy:
+    src: files/checks/
+    dest: /usr/lib/nagios/plugins/
+    mode: 0755
+    owner: nagios
+    follow: yes
+
+- name: Install check_docker if you need it
+  community.general.pipx:
+    name: check_docker
+  when: docker_swarm is defined
+
+- name: Start ncpa
+  ansible.builtin.service:
+    enabled: true
+    name: ncpa.service

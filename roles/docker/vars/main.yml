@@ -1,0 +1,26 @@
+---
+# vars file for docker
+docker_pre_apks:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg2
+  - libssl-dev
+  - python3-cffi-backend
+  - python3-pip
+  - libffi-dev
+  - python3-setuptools
+  - python3-nacl
+  - python3-jsondiff
+
+docker_apks:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+
+docker_buildx:
+  - binfmt-support
+  - qemu-user-static
+  - qemu-user
+  - gnupg2
+  - pass

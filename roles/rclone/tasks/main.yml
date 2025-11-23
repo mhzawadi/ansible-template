@@ -1,0 +1,15 @@
+---
+# tasks file for rclone
+- name: Install rclone
+  ansible.builtin.apt:
+    deb: "https://downloads.rclone.org/rclone-current-linux-{{ rclone_arch }}.deb"
+    update_cache: yes
+
+- name: Template backblaze config
+  ansible.builtin.template:
+    src: templates/rclone.conf.j2
+    dest: /root/.rclone.conf
+    owner: root
+    mode: 0644
+  when:
+    rclone_b2_account

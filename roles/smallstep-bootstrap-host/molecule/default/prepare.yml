@@ -1,0 +1,10 @@
+---
+- name: Prepare
+  hosts: all
+  tasks:
+    - name: "Waiting for instance ssh connection."
+      ansible.builtin.wait_for_connection:
+
+    - name: "Include smallstep-cli"
+      include_role:
+        name: "smallstep-cli"

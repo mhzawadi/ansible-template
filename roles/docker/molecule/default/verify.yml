@@ -1,0 +1,20 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Gather the package facts
+      ansible.builtin.package_facts:
+        manager: auto
+    - name: Check things got installed
+      assert:
+        that: "'containerd.io' in ansible_facts.packages"
+        fail_msg: "Missing containerd.io package"
+        success_msg: "containerd.io got installed"
+    - name: Check things got installed
+      assert:
+        that: "'docker-ce-cli' in ansible_facts.packages"
+        fail_msg: "Missing docker-ce-cli package"
+        success_msg: "docker-ce-cli got installed"

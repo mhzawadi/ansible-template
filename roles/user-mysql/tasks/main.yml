@@ -1,0 +1,133 @@
+---
+# tasks file for user-mysql
+- name: "Adding RO MySQL user to {{ mysql_host }}"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: "{{ mysql_host }}"
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: '*.*:SELECT,SHOW DATABASES,CREATE TEMPORARY TABLES,SHOW VIEW,PROCESS'
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - not item.mysqlRW and mysql_userRW is undefined
+    - not item.devops
+    - item.state == "present"
+
+- name: "Adding RW MySQL user to {{ mysql_host }}"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: "{{ mysql_host }}"
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: "*.*:{{ privs | join(',') }}"
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - item.mysqlRW
+    - mysql_userRW is not defined
+    - item.state == "present"
+
+- name: "Adding RW MySQL user (over ride from play!)"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: "{{ mysql_host }}"
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: "*.*:{{ privs | join(',') }}"
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - mysql_userRW is defined
+    - item.state == "present"
+
+- name: "Adding Admin MySQL user to 127.0.0.1"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: '127.0.0.1'
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: '*.*:ALL,GRANT'
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - item.devops
+    - item.state == "present"
+
+- name: "Adding Admin MySQL user to localhost"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: 'localhost'
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: '*.*:ALL,GRANT'
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - item.devops
+    - item.state == "present"
+
+- name: "Adding Admin MySQL user to {{ mysql_host }}"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: "{{ mysql_host }}"
+    password: "{{ item.mysql_hash }}"
+    encrypted: yes
+    priv: '*.*:ALL,GRANT'
+    state: present
+  with_items: "{{ user_profiles }}"
+  when:
+    - item.devops
+    - item.state == "present"
+    - mysql_host is defined
+
+- name: "Disable MySQL user"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host_all: true
+    state: absent
+  with_items: "{{ user_profiles }}"
+  when:
+    - item.state == "absent"
+
+- name: "Adding service_users to MySQL"
+  community.mysql.mysql_user:
+    login_user: "{{ mysql_admin }}"
+    login_password: "{{ mysql_adminPW }}"
+    login_port: 3306
+    login_host: 127.0.0.1
+    name: "{{ item.username }}"
+    host: '{{ item.allowedhost }}'
+    password: "{{ item.password }}"
+    encrypted: yes
+    priv: "*.*:USAGE/{{ item.database }}.*:SELECT,CREATE TEMPORARY TABLES,DELETE,INSERT,UPDATE"
+    state: present
+  with_items: "{{ service_users }}"

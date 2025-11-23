@@ -1,0 +1,22 @@
+---
+# defaults file for manage-proxmox
+# pve_lxc_template:
+#   - vmid: 102
+#     memory: 512
+#     password: test
+#     hostname: vm102
+#     ostemplate: 'local:vztmpl/debian-11-standard_11.0-1_amd64.tar.gz'
+#     netif: '{"net0":"name=eth0,gw=192.168.50.254,ip=192.168.50.102/24,bridge=vmbr1"}'
+#     disk: 16
+#     pubkey: ""ssh-rsa AAA..."
+
+# pve_kvm_template:
+#   - newid: 103
+#     clone: test
+#     vmid: 9000
+#     name: vm103
+#     storage: local
+#     format: qcow2
+
+pve_lxc_template: []
+pve_kvm_template: []

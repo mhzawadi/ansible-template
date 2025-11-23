@@ -1,0 +1,17 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Check for nagios
+      stat:
+        path: /usr/local/nagios/bin/nagios
+      register: register_name
+
+    - name: Did it install
+      assert:
+        that: register_name.stat.exists
+        fail_msg: "Someting didnt work"
+        success_msg: "nagios installed and ready for config"

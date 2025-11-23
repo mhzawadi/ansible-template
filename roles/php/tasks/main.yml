@@ -1,0 +1,102 @@
+---
+# tasks file for php
+# PHP repo
+- name: Installs pre requs
+  ansible.builtin.apt:
+    pkg: ['apt-transport-https', 'lsb-release', 'ca-certificates', 'gpg']
+    update_cache: true
+    state: present
+
+- name: Set up the apt repository
+  ansible.builtin.lineinfile:
+    dest: /etc/apt/sources.list.d/php.list
+    line: "deb https://packages.sury.org/php/ {{ ansible_distribution_release }} main"
+    create: yes
+    mode: 0664
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: Import an official php signing key
+  ansible.builtin.apt_key:
+    id: 15058500A0235D97F5D10063B188E2B695BD4743
+    url: https://packages.sury.org/php/apt.gpg
+    state: present
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: Setup deb822 formatted repositorie
+  ansible.builtin.deb822_repository:
+    name: php
+    types: deb
+    uris: https://packages.sury.org/php/
+    components: main
+    suites: "{{ ansible_distribution_release }} "
+    signed_by: https://packages.sury.org/nginx/apt.gpg
+    state: present
+    enabled: true
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version >= '13')
+
+- name: Installs php
+  ansible.builtin.apt:
+    pkg: "{{ php_extensions }}"
+    update_cache: true
+    state: present
+
+- name: Adds pear channels
+  ansible.builtin.command: "pear channel-discover {{ php_pear.channels }}"
+  register: channel_result
+  changed_when: "'initialized' not in channel_result.stdout"
+  failed_when: "'already initialized' not in channel_result.stdout"
+  when: pear is defined
+
+- name: Adds pear packages
+  community.general.pear:
+    name: "{{ php_pear.packages }}"
+    state: present
+  when: pear is defined
+
+- name: Install PECL libaries.
+  ansible.builtin.command:
+    "pecl install {{ php_pecl_extensions }}"
+  register:
+    pecl_result
+  changed_when:
+    "pecl_result.rc == 0"
+  failed_when:
+    "not (('already installed' in pecl_result.stdout) or ('install ok:' in pecl_result.stdout) or ('Nothing to install' in pecl_result.stdout))"
+  when: php_pecl_extensions is none
+
+# Config upload
+- name: Create /srv/www/
+  ansible.builtin.file:
+    path: /srv/www/
+    state: directory
+    mode: 0775
+
+- name: Adds php.ini
+  ansible.builtin.template:
+    src: "templates/php.ini.j2"
+    dest: "/etc/php/{{ php_version }}/fpm/php.ini"
+    mode: 0664
+  when: php_config is true
+
+- name: Adds pool config
+  ansible.builtin.template:
+    src: "templates/pool.j2"
+    dest: "/etc/php/{{ php_version }}/fpm/pool.d/www.conf"
+    mode: 0664
+  when: php_config is true
+  notify:
+     - Restart php-fpm
+
+- name: Adds php-fpm.conf
+  ansible.builtin.template:
+    src: "templates/php-fpm.j2"
+    dest: "/etc/php/{{ php_version }}/fpm/php-fpm.conf"
+    mode: 0664
+  when: php_config is true
+
+- name: Adds opcache.conf
+  ansible.builtin.copy:
+    src: "templates/opcache.ini"
+    dest: "/etc/php/{{ php_version }}/mods-available/opcache.ini"
+    mode: 0664
+  when: php_config is true or php_config == 'cli'

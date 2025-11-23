@@ -1,0 +1,26 @@
+---
+# tasks file for nginx
+- name: Install the prerequisites
+  ansible.builtin.package:
+    pkg: ['curl', 'gnupg2', 'ca-certificates', 'lsb-release']
+    update_cache: true
+    state: present
+  when:
+    not update_config
+
+- name: Install from nginx repo on x86
+  ansible.builtin.import_tasks: "install_x86.yml"
+  when:
+    ansible_machine == 'x86_64' and not update_config
+
+- name: Install from source on arm
+  ansible.builtin.import_tasks: "install_arm.yml"
+  when:
+    (ansible_machine == 'armv7l' and not update_config) or
+    (ansible_machine == 'aarch64' and not update_config)
+
+- name: Rebuild config run
+  ansible.builtin.import_tasks: "config.yml"
+
+- name: Reload config
+  ansible.builtin.import_tasks: "reload.yml"

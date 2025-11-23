@@ -1,0 +1,19 @@
+---
+# tasks file for server-ssh
+- name: Copy up horwood ssh config
+  ansible.builtin.template:
+    src: templates/sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    mode: 0755
+    backup: yes
+
+- name: Copy up horwood banner
+  ansible.builtin.template:
+    src: templates/banner
+    dest: /etc/banner
+    owner: root
+    mode: 0755
+    backup: yes
+  notify:
+     - Restart ssh

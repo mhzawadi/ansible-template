@@ -1,0 +1,7 @@
+---
+# handlers file for iptables
+- name: Reload rules
+  ansible.builtin.service:
+    name: netfilter-persistent
+    enabled: yes
+    state: restarted

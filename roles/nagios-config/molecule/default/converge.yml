@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    nagios_admin_pw: test
+    nagios_web_password: test
+  tasks:
+    - name: "Include nagios-config"
+      include_role:
+        name: "nagios-config"

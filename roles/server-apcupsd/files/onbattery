@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# This shell script if placed in /etc/apcupsd
+# will be called by /etc/apcupsd/apccontrol when the UPS
+# goes on batteries.
+# We send an email message to root to notify him.
+#
+SYSADMIN=logs@horwood.biz
+APCUPSD_MAIL="/usr/bin/mail"
+
+HOSTNAME=`hostname`
+MSG="$HOSTNAME Power Failure !!!"
+#
+(
+   echo "Captain, we've lost main power!"
+   /sbin/apcaccess status| grep "TIMELEFT"
+) | $APCUPSD_MAIL -s "$MSG" $SYSADMIN
+
+exit 0

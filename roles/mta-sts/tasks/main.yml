@@ -1,0 +1,22 @@
+---
+# tasks file for mta-sts
+- name: Create dir for MTA-STS
+  ansible.builtin.file:
+    path: /var/www/html/.well-known
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Upload mta-sts html
+  ansible.builtin.copy:
+    src: files/index.html
+    dest: /var/www/html/.well-known
+    owner: root
+    mode: 0644
+
+- name: Upload mta-sts config
+  ansible.builtin.copy:
+    src: files/mta-sts.txt
+    dest: /var/www/html/.well-known
+    owner: root
+    mode: 0644

@@ -1,0 +1,183 @@
+---
+# tasks file for nagios
+- name: Check for untared
+  ansible.builtin.stat:
+    path: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+  register: nagios_exists
+
+- name: Check for untared plugins
+  ansible.builtin.stat:
+    path: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}"
+  register: plugins_exists
+
+- name: Create nagios build folder
+  ansible.builtin.file:
+    path: /var/local/ansible/nagios
+    state: directory
+    mode: 0755
+    owner: root
+
+- name: Create nagios logging folder
+  ansible.builtin.file:
+    path: /var/log/nagios
+    state: directory
+    mode: 0755
+    owner: root
+
+- name: Copy up files
+  ansible.builtin.copy:
+    src: files/
+    dest: /var/local/ansible/nagios/
+    mode: 0755
+    owner: root
+
+- name: Add nagios group
+  ansible.builtin.user:
+    name: nagios
+    state: present
+
+- name: Add nagios user
+  ansible.builtin.user:
+    name: nagios
+    shell: /bin/bash
+    state: present
+    group: nagios
+
+- name: Install build tools
+  ansible.builtin.apt:
+    pkg: "{{ nagios_debs }}"
+    update_cache: true
+    state: present
+
+- name: Copy nagios to host
+  ansible.builtin.get_url:
+    url: "https://github.com/NagiosEnterprises/nagioscore/releases/download/nagios-{{ nagios_ver }}/nagios-{{ nagios_ver }}.tar.gz"
+    dest: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}.tar.gz"
+    mode: 0755
+    owner: root
+
+- name: Remove old directory
+  ansible.builtin.shell: "cd /var/local/ansible/nagios/;rm -fr nagios-{{ nagios_ver }}"
+  when: (nagios_exists.stat.exists) and nagios_reinstall is true
+  changed_when: false
+
+- name: Unwrap nagios
+  ansible.builtin.unarchive:
+    src: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}.tar.gz"
+    dest: "/var/local/ansible/nagios"
+    creates: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}/configure"
+    remote_src: true
+
+- name: Copy nagios plugins to host
+  ansible.builtin.get_url:
+    url: "https://github.com/nagios-plugins/nagios-plugins/releases/download/release-{{ nagios_plugins_ver }}/nagios-plugins-{{ nagios_plugins_ver }}.tar.gz"
+    dest: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}.tar.gz"
+    mode: 0755
+    owner: root
+
+- name: Remove old directory
+  ansible.builtin.shell: "cd /var/local/ansible/nagios/;rm -fr nagios-plugins-{{ nagios_plugins_ver }}"
+  when: (plugins_exists.stat.exists) and nagios_reinstall is true
+  changed_when: false
+
+- name: Unwrap nagios plugins
+  ansible.builtin.unarchive:
+    src: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}.tar.gz"
+    dest: "/var/local/ansible/nagios"
+    creates: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}/configure"
+    remote_src: true
+
+- name: Run nagios configure
+  ansible.builtin.command:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    cmd: "./configure --with-nagios-user=nagios --with-nagios-group=nagios"
+    creates: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}/Makefile"
+  register: nagios_config
+
+- name: Run 'all' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    target: all
+  when: nagios_config.msg == ""
+
+- name: Run 'install' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    target: install
+  when: nagios_config.msg == ""
+
+- name: Run 'install-init' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    target: install-init
+  when: nagios_config.msg == ""
+
+- name: Run 'install-config' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    target: install-config
+  when: nagios_config.msg == ""
+
+- name: Run 'install-commandmode' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-{{ nagios_ver }}"
+    target: install-commandmode
+  when: nagios_config.msg == ""
+
+- name: Run nagios-plugins configure
+  ansible.builtin.command:
+    chdir: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}"
+    cmd: "./configure --with-nagios-user=nagios --with-nagios-group=nagios --with-nslookup-command=/usr/bin/nslookup"
+    creates: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}/Makefile"
+  register: plugins_config
+
+- name: Run make without target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}"
+  when: plugins_config.msg == ""
+
+- name: Run 'install' target as root
+  community.general.make:
+    chdir: "/var/local/ansible/nagios/nagios-plugins-{{ nagios_plugins_ver }}"
+    target: install
+  when: plugins_config.msg == ""
+
+- name: Set htpasswd
+  community.general.htpasswd:
+    path: /etc/nginx/nagios.users
+    name: nagiosadmin
+    password: "{{ nagios_admin_pw }}"
+    owner: nagios
+    group: nagios
+    mode: 0644
+
+- name: Setup symlink to config
+  ansible.builtin.file:
+    src: /usr/local/nagios/etc
+    dest: /etc/nagios
+    state: link
+
+- name: Fix PHP config path
+  ansible.builtin.lineinfile:
+    regexp: 'cgi_base_url'
+    dest: /usr/local/nagios/share/config.inc.php
+    line: "$cfg['cgi_base_url']='/cgi-bin';"
+    owner: nagios
+    group: nagios
+    mode: 0664
+
+- name: Fix home page
+  ansible.builtin.lineinfile:
+    regexp: '^\$url'
+    dest: /usr/local/nagios/share/index.php
+    line: "$url = '/cgi-bin/tac.cgi';"
+    owner: nagios
+    group: nagios
+    mode: 0664
+
+- name: Unwrap nagiostv plugins
+  ansible.builtin.unarchive:
+    src: "https://github.com/chriscareycode/nagiostv-react/releases/download/v{{ nagiostv_version }}/nagiostv-{{ nagiostv_version }}.tar.gz"
+    dest: "/usr/local/nagios/share/"
+    creates: "/usr/local/nagios/share/nagiostv/index.html"
+    remote_src: true

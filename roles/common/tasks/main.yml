@@ -1,0 +1,104 @@
+---
+# tasks file for common
+- name: Set a hostname
+  ansible.builtin.hostname:
+    name: "{{ inventory_hostname }}"
+
+- name: Set hosts file
+  ansible.builtin.lineinfile:
+    dest: /etc/hosts
+    line: "{{ ansible_default_ipv4.address }} {{ inventory_hostname }} {{ ansible_hostname }}"
+
+- name: Base install
+  ansible.builtin.apt:
+    pkg: "{{ common_debs }}"
+    update_cache: yes
+    state: present
+
+- name: Base install for Pis
+  ansible.builtin.apt:
+    pkg: "{{ common_pi }}"
+    state: present
+    update_cache: yes
+  when:
+    (ansible_architecture == 'armv7l' or
+    ansible_architecture == 'aarch64') and
+    ansible_distribution != 'OSMC'
+
+- name: Copy up root tools
+  ansible.builtin.unarchive:
+    src: files/root.tar
+    dest: /root/
+    remote_src: false
+    owner: root
+    group: root
+
+- name: Stop and disable serial-getty@ttyAMA0
+  ansible.builtin.service:
+    name: serial-getty@ttyAMA0
+    enabled: no
+    state: stopped
+  when:
+    ansible_distribution_major_version == 9 and
+    (ansible_architecture == 'armv7l' or
+    ansible_architecture == 'aarch64')
+
+- name: Nullmailer adminaddr
+  ansible.builtin.copy:
+    src: files/adminaddr
+    dest: /etc/nullmailer/adminaddr
+    owner: root
+    mode: 0644
+
+- name: Nullmailer defaultdomain
+  ansible.builtin.copy:
+    src: files/defaultdomain
+    dest: /etc/nullmailer/defaultdomain
+    owner: root
+    mode: 0644
+
+- name: Nullmailer remotes
+  ansible.builtin.copy:
+    src: files/remotes
+    dest: /etc/nullmailer/remotes
+    owner: mail
+    mode: 0600
+
+- name: Nullmailer mailname
+  ansible.builtin.copy:
+    src: files/mailname
+    dest: /etc/mailname
+    owner: root
+    mode: 0644
+
+- name: Nullmailer defaulthost
+  ansible.builtin.template:
+    src: files/defaulthost
+    dest: /etc/nullmailer/defaulthost
+    owner: root
+    mode: 0644
+
+- name: Generate an SSH key for root
+  ansible.builtin.user:
+    name: "root"
+    generate_ssh_key: true
+    ssh_key_bits: 4096
+    ssh_key_file: ".ssh/{{ ansible_hostname }}"
+    state: present
+
+- name: Install mqttools
+  community.general.pipx:
+    name: mqttools
+
+- name: Touch backup test files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  changed_when: false
+  loop:
+    - /filestart
+    - /filemiddle
+    - /fileend

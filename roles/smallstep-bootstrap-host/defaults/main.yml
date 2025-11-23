@@ -1,0 +1,5 @@
+---
+# defaults file for smallstep-bootstrap-host
+ssh_ca_url: https://ca.example.biz:8443
+ssh_ca_domain: example.biz
+ssh_ca_name: logs

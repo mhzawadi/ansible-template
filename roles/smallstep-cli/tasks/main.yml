@@ -1,0 +1,32 @@
+---
+# tasks file for smallstep-cli
+- name: Download & unpack step-cli for armV7
+  ansible.builtin.unarchive:
+    src: "https://github.com/smallstep/cli/releases/download/v{{ stepcli_version }}/step_linux_{{ stepcli_version }}_armv7.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+  when:
+    ansible_architecture == 'armv7l'
+
+- name: Download & unpack step-cli for arm64
+  ansible.builtin.unarchive:
+    src: "https://github.com/smallstep/cli/releases/download/v{{ stepcli_version }}/step_linux_{{ stepcli_version }}_arm64.tar.gz"
+    dest: /tmp/
+    remote_src: yes
+  when:
+    ansible_architecture == 'aarch64'
+
+- name: Install step-cli for armV7 & arm64
+  ansible.builtin.command: "cp /tmp/step_{{ stepcli_version }}/bin/step /usr/bin/"
+  register: step_cli_cp
+  changed_when: false
+  when:
+    ansible_architecture == 'aarch64' or
+    ansible_architecture == 'armv7l'
+
+- name: Install step-cli for amd64
+  ansible.builtin.apt:
+    deb: "https://dl.smallstep.com/gh-release/cli/gh-release-header/v{{ stepcli_version }}/step-cli_{{ stepcli_version }}-1_amd64.deb"
+    update_cache: yes
+  when:
+    ansible_architecture == 'x86_64'

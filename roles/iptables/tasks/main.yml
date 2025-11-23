@@ -1,0 +1,27 @@
+---
+# tasks file for iptables
+- name: Install iptables
+  ansible.builtin.apt:
+    pkg: ['iptables', 'iptables-persistent']
+    update_cache: true
+    state: present
+
+- name: Copy up rule rules.v4
+  ansible.builtin.template:
+    src: templates/rules.v4
+    dest: /etc/iptables/rules.v4
+    owner: root
+    mode: 0755
+    backup: yes
+  notify:
+    - Reload rules
+
+- name: Copy up rule rules.v6
+  ansible.builtin.template:
+    src: templates/rules.v6
+    dest: /etc/iptables/rules.v6
+    owner: root
+    mode: 0755
+    backup: yes
+  notify:
+    - Reload rules

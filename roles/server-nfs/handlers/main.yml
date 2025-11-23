@@ -1,0 +1,11 @@
+---
+# handlers file for server-nfs
+
+- name: SystemD reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Exportfs
+  ansible.builtin.command:
+    cmd: exportfs -a
+  changed_when: false

@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include server-apcupsd"
+      include_role:
+        name: "server-apcupsd"

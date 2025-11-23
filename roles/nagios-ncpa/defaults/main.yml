@@ -1,0 +1,3 @@
+---
+# defaults file for nagios-ncpa
+nagios_ncpa_version: 3.0.1

@@ -1,0 +1,12 @@
+---
+# defaults file for smallstep-ca
+stepca_oidc_client_id: "stepca_oidc_client_id" # from Google
+stepca_oidc_client_secret: "stepca_oidc_client_secret" # from Google
+stepca_allowed_domain: "example.com"
+stepca_ca_name: "test-ca"
+stepca_root_key_password: "thisIsAtest"
+stepca_email: "your@email.address"
+stepca_version: "0.28.1"
+stepca_openid_config_endpoint: "https://accounts.google.com/.well-known/openid-configuration"
+stepca_path: /etc/step-ca
+stepca_dnsname: "127.0.0.1,test.ca.local"

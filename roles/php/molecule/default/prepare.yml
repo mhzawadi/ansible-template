@@ -1,0 +1,13 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: "Waiting for instance ssh connection."
+      wait_for_connection:
+
+    - name: "Set instance hostname."
+      become: yes
+      hostname:
+        name: "{{ proxmox_hostname | d(inventory_hostname) }}"
+      when: proxmox_sethostname | d(molecule_yml.driver.options.sethostname | d('yes')) | bool

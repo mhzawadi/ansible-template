@@ -1,0 +1,4 @@
+#!/bin/sh
+export STEPPATH=/root/.step
+cd /etc/ssh && step ssh renew ssh_host_ecdsa_key-cert.pub ssh_host_ecdsa_key --force 2> /dev/null
+exit 0

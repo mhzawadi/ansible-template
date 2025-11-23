@@ -1,0 +1,23 @@
+---
+# tasks file for fail2ban
+- name: Install fail2ban
+  ansible.builtin.apt:
+    pkg: "fail2ban"
+    force_apt_get: yes
+    update_cache: yes
+    state: present
+
+- name: Copy up main config
+  ansible.builtin.copy:
+    src: files/jail.local
+    dest: /etc/fail2ban/jail.local
+    owner: root
+    mode: 0644
+  notify: Reload fail2ban service
+
+- name: Add API key to abuseipdb.conf
+  ansible.builtin.lineinfile:
+    dest: /etc/fail2ban/action.d/abuseipdb.conf
+    regexp: ^abuseipdb_apikey=
+    line: "abuseipdb_apikey = 9f974824ca47fa37ef3180620c4790c488643854906c1307df4b02523c17e256f2fa0ed13f62ea7d"
+  notify: Reload fail2ban service

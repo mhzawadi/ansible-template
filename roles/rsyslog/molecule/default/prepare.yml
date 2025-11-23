@@ -1,0 +1,37 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: true
+  become: true
+  tasks:
+    - name: Wait for cloud-init to finish
+      ansible.builtin.wait_for:
+        path: /var/lib/cloud/instance/boot-finished
+        state: present
+    - name: Make sure python3 is installed
+      ansible.builtin.package:
+        name: python3
+        state: present
+        update_cache: yes
+    - name: Get EPEL on AWS Linux
+      ansible.builtin.command:
+        cmd: amazon-linux-extras install epel -y # noqa: no-changed-when
+      when: (ansible_distribution == 'Amazon' and ansible_distribution_major_version == '2')
+    - name: Install cronie on AL2023 instances
+      ansible.builtin.package:
+        name: cronie
+        state: present
+      when: (ansible_distribution == 'Amazon' and ansible_distribution_major_version == '2023')
+    - name: Install cron on Debian 12 instances
+      ansible.builtin.package:
+        name: cron
+        state: present
+      when: (ansible_distribution == 'Debian' and ansible_distribution_major_version == '12')
+    - name: Insert shutdown cron file in /etc/cron.d
+      ansible.builtin.cron:
+        name: "Shutdown test instance after hours"
+        hour: "22"
+        minute: "30"
+        job: "/usr/sbin/shutdown -h now"
+        user: root
+        cron_file: shutdown

@@ -1,0 +1,27 @@
+---
+# tasks file for deb-interface
+
+- name: Setup interface
+  ansible.builtin.lineinfile:
+    dest: /etc/network/interfaces
+    line: "iface {{ ansible_default_ipv4.interface }} inet6 static"
+
+- name: Set IPv6 address
+  community.general.interfaces_file:
+    dest: /etc/network/interfaces
+    iface: "{{ ansible_default_ipv4.interface }}"
+    address_family: inet6
+    option: address
+    value: "{{ interface_ipv6_address }}"
+    backup: true
+    state: present
+
+- name: Set IPv6 gateway
+  community.general.interfaces_file:
+    dest: /etc/network/interfaces
+    iface: "{{ ansible_default_ipv4.interface }}"
+    address_family: inet6
+    option: gateway
+    value: "{{ interface_ipv6_gateway }}"
+    backup: true
+    state: present

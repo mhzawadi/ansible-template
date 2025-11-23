@@ -1,0 +1,8 @@
+---
+# defaults file for server-nfs
+# nfs_exports:
+#   - net: 127.0.0.1/42
+#     src: /mnt/data
+# nfs_mounts:
+#   - path: /mnt/data
+#     src: '192.168.51.204:/mnt/data/horwood_owncloud/'

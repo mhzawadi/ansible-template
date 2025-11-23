@@ -1,0 +1,10 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    nagios_ncpa_version: 3.0.1
+    nagios_ncpa_api_key: my-secret-key
+  tasks:
+    - name: "Include nagios-ncpa"
+      include_role:
+        name: "nagios-ncpa"

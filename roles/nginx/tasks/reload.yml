@@ -1,0 +1,31 @@
+---
+- name: Check nginx config
+  ansible.builtin.command: '/usr/sbin/nginx -t'
+  failed_when: false
+  changed_when: false
+  register: nginx_config
+
+- name: Playbook failure if nginx config checks fail.
+  ansible.builtin.fail:
+    msg: "The nginx checks have failed. {{ nginx_config.stderr }}"
+  when: '"syntax is ok" not in nginx_config.stderr'
+
+- name: You have a warning
+  ansible.builtin.debug:
+    msg: "{{ nginx_config.stderr_lines }}"
+  when: '"nginx: [warn]" in nginx_config.stderr'
+
+- name: Playbook failure, there is a warning.
+  ansible.builtin.fail:
+    msg: "Nginx warning, see above"
+  when: '"nginx: [warn]" in nginx_config.stderr'
+
+- name: Reload nginx service
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: reloaded
+  changed_when: false
+  when:
+    - '"syntax is ok" in nginx_config.stderr'
+    - update_config

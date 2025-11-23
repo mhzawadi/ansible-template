@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: This cant be tested
+      debug:
+        msg: This role needs a working CA, thus cant be tested this way

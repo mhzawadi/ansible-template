@@ -1,0 +1,42 @@
+---
+# tasks file for server-nfs
+- name: Installs nfs
+  ansible.builtin.apt:
+    pkg: "{{ nfs_packages }}"
+    state: present
+
+- name: Start rpcbind service
+  ansible.builtin.service:
+    name: rpcbind
+    enabled: yes
+    state: started
+  when: nfs_exports is defined
+
+- name: Start nfs-kernel-server service
+  ansible.builtin.service:
+    name: nfs-kernel-server
+    enabled: yes
+    state: started
+  when: nfs_exports is defined
+
+- name: Mount an NFS volume
+  ansible.posix.mount:
+    src: "{{ item.src }}"
+    path: "{{ item.path }}"
+    opts: soft,bg,timeo=8,retrans=6,retry=5,intr,tcp,noatime
+    state: mounted
+    fstype: nfs
+  loop: "{{ nfs_mounts }}"
+  when: nfs_mounts is defined
+
+- name: Copy up NFS exports
+  ansible.builtin.template:
+    src: templates/exports.j2
+    dest: /etc/exports
+    owner: root
+    mode: 0755
+    backup: yes
+  when: nfs_exports is defined
+  notify:
+    - SystemD reload
+    - Exportfs

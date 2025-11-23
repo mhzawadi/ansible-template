@@ -1,0 +1,56 @@
+---
+- name: Prepare system
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: "Waiting for instance ssh connection."
+      wait_for_connection:
+
+    - when: molecule_yml.driver.options.sethostname | d('yes') | bool
+      block:
+        - name: "Set instance hostname."
+          become: yes
+          hostname:
+            name: "{{ inventory_hostname }}"
+
+        - name: "Gather facts."
+          setup:
+
+        - name: "Remove workaround loopback from /etc/hosts file."
+          become: yes
+          lineinfile:
+            state: absent
+            path: /etc/hosts
+            regex: '^127\.0\.1\.1\s+\S+'
+
+        - name: "Add address and hostname to /etc/hosts file."
+          become: yes
+          lineinfile:
+            state: present
+            path: /etc/hosts
+            line: "{{ ansible_default_ipv4.address }} {{ ansible_hostname }}"
+
+- name: Prepare
+  hosts: all
+  become: true
+  roles:
+    # Requirements
+    - role: mysql
+      vars:
+        mysql_root_hash: '*2470C0C06DEE42FD1618BB99005ADCA2EC9D1E19'
+        mysql_root_password: 'password'
+    # Add ml1 user so we can remove them later (this is idempotent way)
+    - role: user-mysql
+      vars:
+        user_profiles:
+          - username: ml1
+            mysql_hash: "*3d885319d32af8352a3b6dc864f86159f67911c1"
+            ssh_key: false
+            devops: false
+            sudo: false
+            mysqlRW: false
+            state: present
+        mysql_root_password: "password"
+        mysql_admin: "root"
+        mysql_adminPW: "password"
+        mysql_host: "127.0.0.1"

@@ -1,0 +1,36 @@
+---
+# This is an example playbook to execute Ansible tests.
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    # Gather information
+    - name: "Gather Service Facts"
+      ansible.builtin.service_facts:
+
+    - name: "Check journald configuration : Forwarding to syslog"
+      ansible.builtin.command:
+        cmd: "grep '^ForwardToSyslog=yes$' /etc/systemd/journald.conf"
+      register: rsyslog_journald_forward
+      changed_when: false #grep is a readonly operation
+
+    - name: "Check journald configuration : Binary journal disabled"
+      ansible.builtin.command:
+        cmd: "grep '^Storage=none$' /etc/systemd/journald.conf"
+      register: rsyslog_storage_none
+      changed_when: false #grep is a readonly operation
+
+    # Validate information
+    - name: "Assert that rsyslog is running and enabled"
+      ansible.builtin.assert:
+        that:
+          - "ansible_facts['services']['rsyslog.service']['state']  == 'running'"
+          - "ansible_facts['services']['rsyslog.service']['status'] == 'enabled'"
+
+    - name: "Assert that journald is configured to forward logs"
+      ansible.builtin.assert:
+        that: "rsyslog_journald_forward.rc == 0"
+
+    - name: "Assert that journald is configured not to store its own logs"
+      ansible.builtin.assert:
+        that: "rsyslog_storage_none.rc == 0"

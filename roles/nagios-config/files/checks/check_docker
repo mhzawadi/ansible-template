@@ -1,0 +1,169 @@
+#!/bin/bash
+###[INFO]###############################################
+## check_docker                                       ##
+## v2.0, modified on 2018-06-14                       ##
+## monitoring-plugin to check Docker-Containers	      ##
+## only for remote execution                          ##
+## written by Alexander Knerlein                      ##
+## made in West Germany                               ##
+## GNU General Public License Version 3               ##
+########################################################
+case $1 in
+"--help"|"-?")
+	printf "#...HELP...?!\n\n"
+	printf "User should be member of group \"docker\"!\n"
+	printf "To change group membership run gpasswd or usermod.\n\n"
+	printf "Otherwise execute directly as root or use sudo! (not recommended)\n\n"
+	printf "use check_docker [--help|-?] for help\n"
+	printf "use check_docker [--info] for information about\n\n"
+	printf "use check_docker without any arguments for state-check\n"
+	printf "Critical states are Exited != 0 and Dead.\n\n"
+	printf "Additional arguments:\n\n"
+	printf " -w [numeric]\n"
+	printf "Adds a cpu-check warning value (in %%).\n\n"
+	printf " -c [numeric]\n"
+	printf "Adds a cpu-check critical value (in %%).\n\n"
+	printf " -x [numeric]\n"
+	printf "Adds a memory-check warning value (in %%).\n\n"
+	printf " -y [numeric]\n"
+	printf "Adds a memory-check critical value (in %%).\n\n"
+	exit 0
+;;
+"--info")
+	printf "###[INFO]###############################################\n"
+	printf "## check_docker                                       ##\n"
+	printf "## v2.0, modified on 2018-06-14                       ##\n"
+	printf "## moritoring-plugin to check Docker-Containers       ##\n"
+	printf "## only for remote execution                          ##\n"
+	printf "## written by Alexander Knerlein                      ##\n"
+	printf "## made in West Germany                               ##\n"
+	printf "## GNU General Public License Version 3               ##\n"
+	printf "########################################################\n"
+	exit 0
+;;
+esac
+function needhelp() {
+	printf "use check_docker [--help|-?] for help\n"
+        printf "we are $USERNAME"
+	exit $1
+}
+function checknum() {
+	echo $1 | grep -E ^[[:digit:]]+$ >/dev/null 2>&1
+	if [ $? -ne 0 ]
+	then
+		printf "%s: no valid number -- %s\n\n" $0 $1
+		needhelp 11
+	fi
+}
+access=false
+test $(id -u) -eq 0 && access=true
+echo $USERNAME
+for group in $(groups $USERNAME)
+do
+	test $group == "docker" && access=true
+done
+test $access = false && printf "%s: user is no member of group \"docker\" and UID != 0\n\n" "$0" && needhelp 10
+dls="docker container ls"
+dst="docker stats"
+dpt="docker port"
+containercount=0
+copt=false
+mopt=false
+ucritcount=0
+cwarncount=0
+ccritcount=0
+mwarncount=0
+mcritcount=0
+cwarn=999
+mwarn=999
+ccrit=999
+mcrit=999
+temp=$(mktemp /tmp/$$.XXXXX)
+trap 'rm "$temp"' 0
+idlist=$($dls --all --format "{{.ID}}")
+while getopts "w:c:x:y:" OPT
+do
+	case $OPT in
+	w)
+		copt=true
+		cwarn=$OPTARG
+		checknum $cwarn
+	;;
+	c)
+		copt=true
+		ccrit=$OPTARG
+		checknum $ccrit
+	;;
+	x)
+		mopt=true
+		mwarn=$OPTARG
+		checknum $mwarn
+	;;
+	y)
+		mopt=true
+		mcrit=$OPTARG
+		checknum $mcrit
+	;;
+	*)
+		printf "\n"
+		needhelp 12
+	;;
+	esac
+done
+
+for id in $idlist
+do
+	((containercount++))
+	if [ $($dls --all --filter "id=$id" --format "{{.Status}}" | awk '{print $1}') == "Exited" ]
+	then
+		if [ $($dls --all --filter "id=$id" --format "{{.Status}}" | awk '{print $2}' | tr -d "()") -ne 0 ]
+		then
+			((ucritcount++))
+		fi
+	elif [ $($dls --all --filter "id=$id" --format "{{.Status}}" | awk '{print $1}') == "Dead" ]
+	then
+		((ucritcount++))
+	fi
+	echo $($dls --all --filter "id=$id" --format "[ID] {{.ID}}, [NAME] {{.Names}}, [STATE] {{.Status}}")$($dst $id --no-stream --format ", [CPU] {{.CPUPerc}}, [MEMORY] {{.MemUsage}} ({{.MemPerc}}), [NET I/O] {{.NetIO}}, [BLOCK I/O] {{.BlockIO}};;") >>$temp 2>&1
+done
+
+test $copt = true && for id in $idlist
+do
+	cpuperc=$($dst $id --no-stream --format "{{.CPUPerc}}" | cut -d. -f 1)
+	if [ $cpuperc -ge $ccrit ]
+	then
+		((ccritcount++))
+	elif [ $cpuperc -ge $cwarn ]
+	then
+		((cwarncount++))
+	fi
+done
+
+test $mopt = true && for id in $idlist
+do
+	memperc=$($dst $id --no-stream --format "{{.MemPerc}}" | cut -d. -f 1)
+	if [ $memperc -ge $mcrit ]
+	then
+		((mcritcount++))
+	elif [ $memperc -ge $mwarn ]
+	then
+		((mwarncount++))
+	fi
+done
+
+printf "%s total -- state.*: %s critical" $containercount $ucritcount
+test $copt = true && printf " -- cpu.*: %s warnings, %s critical" $cwarncount $ccritcount
+test $mopt = true && printf " -- memory.*: %s warnings, %s critical" $mwarncount $mcritcount
+printf ";;\n"
+
+cat $temp
+printf "\n"
+if [ $ucritcount -eq 0 ] && [ $cwarncount -eq 0 ] && [ $ccritcount -eq 0 ] && [ $mwarncount -eq 0 ] && [ $mcritcount -eq 0 ]
+then
+	exit 0
+elif [ $ucritcount -gt 0 ] || [ $ccritcount -gt 0 ] || [ $mcritcount -gt 0 ]
+then
+	exit 2
+else
+	exit 1
+fi

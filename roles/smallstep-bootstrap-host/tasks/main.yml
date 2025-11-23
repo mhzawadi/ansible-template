@@ -1,0 +1,82 @@
+---
+# tasks file for smallstep-bootstrap-host
+- name: Tidy up files
+  ansible.builtin.import_tasks: tidy_up.yml
+  when: tidy is defined
+
+- name: Configure step to connect to & trust our step-ca
+  ansible.builtin.command:
+    cmd: "/usr/bin/step ca bootstrap --ca-url {{ ssh_ca_url }} --fingerprint {{ ssh_ca_fingerprint }}"
+    creates: /root/.step/certs/root_ca.crt
+
+- name: Install the CA cert for validating user certificates (from /etc/step-ca/certs/ssh_user_key.pub` on the CA)
+  ansible.builtin.shell:
+    cmd: "/usr/bin/step ssh config --roots > $(step path)/certs/ssh_user_key.pub"
+    creates: /root/.step/certs/ssh_user_key.pub
+
+- name: Set the CA token password
+  ansible.builtin.lineinfile:
+    path: /root/key
+    line: "{{ ssh_ca_password }}"
+    create: yes
+    owner: root
+    mode: 0755
+
+- name: Get a CA token
+  ansible.builtin.shell:
+    cmd: >
+      /usr/bin/step-cli ca token '{{ ansible_hostname }}'
+      --principal '{{ inventory_hostname }}' --principal '{{ ansible_default_ipv4.address }}'
+      --ca-url='{{ ssh_ca_url }}' --host --ssh --provisioner='{{ ssh_ca_name }}@{{ ssh_ca_domain }}' -password-file=/root/key
+    creates: /root/token
+  args:
+    chdir: /root
+    executable: /bin/bash
+  register: ca_token
+  changed_when: false
+
+- name: Ask the CA to exchange our host key for an SSH host certificate
+  ansible.builtin.command:
+    cmd: >
+      /usr/bin/step-cli ssh certificate {{ ansible_hostname }} /etc/ssh/ssh_host_ecdsa_key.pub
+      --host --sign --provisioner \"{{ ssh_ca_name }}@{{ ssh_ca_domain }}\"
+      --principal {{ inventory_hostname }} --principal {{ ansible_default_ipv4.address }}
+      --token {{ ca_token.stdout }} -f
+    creates: /etc/ssh/ssh_host_ecdsa_key-cert.pub
+  register: sign_cert
+
+- name: Whats your token
+  ansible.builtin.debug:
+    var: sign_cert.stdout
+
+- name: Configure sshd
+  ansible.builtin.blockinfile:
+    path: /etc/ssh/sshd_config
+    block: |
+      # SSH CA Configuration
+
+      # This is the CA's public key, for authenticatin user certificates:
+      TrustedUserCAKeys /root/.step/certs/ssh_user_key.pub
+
+      # This is our host private key and certificate:
+      HostKey /etc/ssh/ssh_host_ecdsa_key
+      HostCertificate /etc/ssh/ssh_host_ecdsa_key-cert.pub
+
+- name: Restart sshd
+  ansible.builtin.service:
+    name: sshd
+    state: restarted
+
+- name: Create weekly cron
+  ansible.builtin.file:
+    path: /etc/cron.weekly
+    state: directory
+    owner: root
+    mode: 0755
+
+- name: Add a weekly cron script to rotate our host certificate
+  ansible.builtin.copy:
+    src: files/rotate-ssh-certificate
+    dest: /etc/cron.weekly/rotate-ssh-certificate
+    owner: root
+    mode: 0755

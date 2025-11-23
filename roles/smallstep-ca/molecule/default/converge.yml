@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    stepca_dns_names: testing
+  tasks:
+    - name: "Include smallstep-ca"
+      include_role:
+        name: "smallstep-ca"

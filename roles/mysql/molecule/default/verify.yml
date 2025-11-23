@@ -1,0 +1,29 @@
+---
+# This is an example playbook to execute Ansible tests.
+
+- name: Verify
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Populate service facts
+      ansible.builtin.service_facts:
+      register: services
+
+    - name: Check MySQL is running
+      assert:
+        that: "'mariadb' in ansible_facts.services"
+        fail_msg: "failed to find mariadb, did it install"
+        success_msg: "mariadb has started"
+
+    - name: Get MySQL version with non-default credentials
+      community.mysql.mysql_info:
+        login_user: root
+        login_password: "password"
+        login_host: 127.0.0.1
+        login_port: 3306
+        filter: version
+      register: mysql_status
+
+    - name: show the running version
+      ansible.builtin.debug:
+        var: mysql_status.version.full

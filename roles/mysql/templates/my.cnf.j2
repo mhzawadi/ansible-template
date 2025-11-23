@@ -1,0 +1,82 @@
+[client]
+port                    = 3306
+socket                  = /var/run/mysqld/mysqld.sock
+default-character-set   = utf8mb4
+[mysqld_safe]
+socket                  = /var/run/mysqld/mysqld.sock
+nice                    = 0
+[mariadb]
+thread_handling=pool-of-threads
+[mysqld]
+user                    = mysql
+pid-file                = /var/run/mysqld/mysqld.pid
+socket                  = /var/run/mysqld/mysqld.sock
+port                    = 3306
+basedir                 = /usr
+datadir                 = /mnt/mysql_data/mysql/
+tmpdir                  = /tmp
+log_error               = /var/log/mariadb.err
+lc-messages-dir         = /usr/share/mysql
+skip-external-locking
+skip-name-resolve
+
+binlog_format             = ROW
+character_set_server      = utf8mb4
+collation_server          = utf8mb4_general_ci
+expire_logs_days          = 10
+innodb_buffer_pool_size   = 3G
+innodb_file_format        = barracuda
+innodb_file_per_table     = 1
+innodb_large_prefix       = on
+innodb_log_buffer_size    = 3G
+innodb_log_file_size      = 768M
+innodb_flush_method       = O_DIRECT
+interactive_timeout       = 900
+join_buffer_size          = 256M
+key_buffer_size           = 10M
+max_allowed_packet        = 10M
+max_binlog_size           = 100M
+max_connections           = 50
+max_heap_table_size       = 512M
+myisam-recover-options    = BACKUP
+net_buffer_length         = 2K
+query_cache_limit         = 128M
+query_cache_size          = 0
+query_cache_type          = 0
+read_buffer_size          = 256K
+read_rnd_buffer_size      = 256K
+table_definition_cache    = 1500
+table_open_cache          = 1230
+thread_cache_size         = 25
+thread_concurrency        = 25
+thread_stack              = 128k
+tmp_table_size            = 512M
+transaction_isolation     = READ-COMMITTED
+wait_timeout              = 900
+
+performance_schema = on
+performance-schema-consumer-events-statements-history-long = ON
+performance-schema-consumer-events-statements-history = ON
+performance-schema-consumer-events-statements-current = ON
+performance-schema-consumer-events-stages-current=ON
+performance-schema-consumer-events-stages-history=ON
+performance-schema-consumer-events-stages-history-long=ON
+performance-schema-consumer-events-transactions-current=ON
+performance-schema-consumer-events-transactions-history=ON
+performance-schema-consumer-events-transactions-history-long=ON
+performance-schema-consumer-events-waits-current=ON
+performance-schema-consumer-events-waits-history=ON
+performance-schema-consumer-events-waits-history-long=ON
+performance-schema-instrument='%=ON'
+max-digest-length=2048
+performance-schema-max-digest-length=2018
+
+#innodb_force_recovery=1
+
+[mysqldump]
+quick
+quote-names
+max_allowed_packet      = 16M
+[mysql]
+[isamchk]
+key_buffer              = 16M

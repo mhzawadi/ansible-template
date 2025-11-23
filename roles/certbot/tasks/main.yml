@@ -1,0 +1,12 @@
+---
+# tasks file for certbot
+- name: Install virtualenv
+  ansible.builtin.apt:
+    pkg: ["virtualenv", "python3-packaging"]
+    update_cache: yes
+    state: present
+
+- name: Install Certbot and OVH DNS
+  ansible.builtin.pip:
+    name: ['certbot', 'certbot-dns-ovh']
+    virtualenv: /root/certbot

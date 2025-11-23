@@ -1,0 +1,31 @@
+---
+- name: Gather service facts
+  ansible.builtin.service_facts:
+
+- name: "Remove that journald is configured to forward its logs to rsyslog"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: '^#?ForwardToSyslog='
+    line: '#ForwardToSyslog=no'
+    state: present
+  notify: Restart the journald service
+
+- name: "Remove persistent of logs by journald"
+  ansible.builtin.lineinfile:
+    path: /etc/systemd/journald.conf
+    regexp: '^#?Storage='
+    line: 'Storage=auto'
+    state: present
+  notify: Restart the journald service
+
+- name: "Ensure the rsyslogd service is stopped and disabled"
+  ansible.builtin.service:
+    name: rsyslog
+    state: stopped
+    enabled: false
+  when: "'rsyslog.service' in ansible_facts.services"
+
+- name: "Uninstall the rsyslog package"
+  ansible.builtin.package:
+    name: "{{ rsyslog_packages }}"
+    state: absent

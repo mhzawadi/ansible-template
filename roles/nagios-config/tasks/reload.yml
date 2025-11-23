@@ -1,0 +1,38 @@
+---
+- name: Config test and reload
+  ansible.builtin.shell: /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg # noqa: command-instead-of-shell
+  failed_when: false
+  changed_when: false
+  register: nagios_config
+
+- name: Playbook failure if nagios config checks fail.
+  ansible.builtin.fail:
+    msg: "The nagios checks have failed. {{ nagios_config.stdout }}"
+  when: '"Error in configuration" in nagios_config.stderr'
+
+- name: You have a warning
+  ansible.builtin.debug:
+    msg: "{{ nagios_config.stdout_lines }}"
+  when: '"Total Warnings: 0" not in nagios_config.stdout'
+
+- name: Playbook failure, there is a warning.
+  ansible.builtin.fail:
+    msg: "Nagios warning, see above"
+  when: '"Total Warnings: 0" not in nagios_config.stdout'
+
+- name: Reload nagios service
+  ansible.builtin.service:
+    name: nagios
+    enabled: true
+    state: reloaded
+  when:
+    - '"Things look okay" in nagios_config.stdout'
+
+- name: Give insecure permissions to an existing file
+  ansible.builtin.file:
+    path: /usr/local/nagios/var/rw/nagios.cmd
+    owner: root
+    group: root
+    mode: '0666'
+  when:
+    - '"Things look okay" in nagios_config.stdout'

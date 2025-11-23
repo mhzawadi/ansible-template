@@ -1,0 +1,54 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    php_version: '8.1'
+    php_extensions:
+      - php8.1-fpm
+    php_pecl_extensions:
+      - mcrypt
+  tasks:
+    - name: "Include php"
+      include_role:
+        name: "php"
+
+- name: nextcloud test
+  hosts: all
+  vars:
+    php_config: true
+    php_version: "8.1"
+    php_extensions:
+      - php8.1-bcmath
+      - php8.1-cli
+      - php8.1-common
+      - php8.1-curl
+      - php8.1-dev
+      - php8.1-fpm
+      - php8.1-gd
+      - php8.1-gmp
+      - php8.1-imap
+      - php8.1-intl
+      - php8.1-mbstring
+      - php8.1-mbstring-dbgsym
+      - php8.1-memcached
+      - php8.1-mysql
+      - php8.1-opcache
+      - php8.1-readline
+      - php8.1-redis
+      - php8.1-snmp
+      - php8.1-xml
+      - php8.1-xmlrpc
+      - php8.1-xmlrpc
+      - php8.1-zip
+      - php-apcu
+      - php-imagick
+      - php-pear
+      - pkg-php-tools
+      - libmagickwand-dev
+    php_pecl_extensions:
+      - mcrypt
+      - imagick
+  tasks:
+    - name: "Include php"
+      include_role:
+        name: "php"

@@ -1,0 +1,11 @@
+---
+# defaults file for php
+php_version: "8.4"
+
+php_extensions: []
+
+php_pecl_extensions: []
+
+php_pear: []
+
+php_config: false

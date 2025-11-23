@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include mta-sts"
+      include_role:
+        name: "mta-sts"

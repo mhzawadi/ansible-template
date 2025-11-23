@@ -1,0 +1,6 @@
+---
+# vars file for server-nfs
+nfs_packages:
+  - portmap
+  - nfs-common
+  - nfs-kernel-server

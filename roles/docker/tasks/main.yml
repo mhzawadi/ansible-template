@@ -1,0 +1,45 @@
+---
+# tasks file for docker
+- name: Install pre setup stuff
+  ansible.builtin.apt:
+    pkg: "{{ docker_pre_apks }}"
+    update_cache: true
+    state: present
+
+- name: Add gpg for docker repo
+  ansible.builtin.apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: Copy up apt list
+  ansible.builtin.apt_repository:
+    repo: "deb [arch={{ docker_arch }}] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+    state: present
+    filename: docker
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version <= '12')
+
+- name: Setup deb822 formatted repositorie
+  ansible.builtin.deb822_repository:
+    name: php
+    types: deb
+    uris: https://download.docker.com/linux/debian
+    components: stable
+    suites: "{{ ansible_distribution_release }}"
+    signed_by: https://download.docker.com/linux/debian/gpg
+    state: present
+    enabled: true
+  when: (ansible_distribution == 'Debian' and ansible_distribution_major_version >= '13')
+
+- name: Install docker
+  ansible.builtin.apt:
+    pkg: "{{ docker_apks }}"
+    force_apt_get: yes
+    update_cache: yes
+    state: present
+
+- name: Start docker service
+  ansible.builtin.service:
+    name: docker
+    enabled: yes
+    state: started

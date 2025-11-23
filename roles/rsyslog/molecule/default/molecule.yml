@@ -1,0 +1,28 @@
+---
+dependency:
+  name: galaxy
+driver:
+  name: ec2
+platforms:
+  - name: "rsyslog-install-al2-x86"
+    image: ami-0f3497daebf127026
+    instance_type: t3.large
+    vpc_subnet_id: subnet-0a0c114d5a46ba1a6
+    tags:
+      Name: "rsyslog-install-al2-x86"
+  - name: "rsyslog-install-al2023-arm"
+    image: ami-0c00cb2f2d8ea8cc6
+    instance_type: t4g.large
+    vpc_subnet_id: subnet-0a0c114d5a46ba1a6
+    tags:
+      Name: "rsyslog-install-al2023-arm"
+  - name: "rsyslog-install-deb12-arm"
+    image: ami-00d714618e1e1a7b0
+    instance_type: t4g.large
+    vpc_subnet_id: subnet-0a0c114d5a46ba1a6
+    tags:
+      Name: "rsyslog-install-deb12-arm"
+provisioner:
+  name: ansible
+verifier:
+  name: ansible

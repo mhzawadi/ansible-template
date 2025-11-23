@@ -1,0 +1,42 @@
+---
+- name: We will update your config
+  ansible.builtin.debug:
+    msg: 'This will delete the config dir and re-create it'
+  when:
+    update_config
+
+- name: Delete sites-available
+  ansible.builtin.file:
+    path: /etc/nginx/sites-available
+    state: absent
+  changed_when: false
+  when:
+    update_config
+
+- name: Create sites-available
+  ansible.builtin.file:
+    path: /etc/nginx/sites-available
+    state: directory
+    owner: root
+    mode: 0755
+  changed_when: false
+  when:
+    update_config
+
+- name: Delete sites-enabled
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled
+    state: absent
+  changed_when: false
+  when:
+    update_config
+
+- name: Create sites-enabled
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled
+    state: directory
+    owner: root
+    mode: 0755
+  changed_when: false
+  when:
+    update_config

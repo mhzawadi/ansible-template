@@ -1,0 +1,12 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: install SSH
+      apt:
+        pkg: "openssh-server"
+        update_cache: yes
+        state: present
+    - name: "Include server-ssh"
+      include_role:
+        name: "server-ssh"

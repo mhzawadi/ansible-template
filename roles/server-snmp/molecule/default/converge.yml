@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include server-snmp"
+      include_role:
+        name: "server-snmp"
+      vars:
+        snmp_port: udp:161
+        snmp_access:
+          - community: horwood
+            hosts: 192.168.1.1
+          - community: horwood
+            hosts: 192.168.1.0/24
+        snmp_contact: host <email@address.com>
+        snmp_location: a small hole in the floor

@@ -1,0 +1,12 @@
+---
+# tasks file for rsyslog
+- name: Import task for Installation
+  ansible.builtin.import_tasks:
+    file: install.yml
+  when:
+    - mode != 'uninstall'
+
+- name: Import task for Uninstallation
+  ansible.builtin.import_tasks:
+    file: uninstall.yml
+  when: mode == 'uninstall'

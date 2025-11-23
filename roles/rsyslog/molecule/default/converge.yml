@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  tasks:
+    - name: "Include rsyslog-install"
+      ansible.builtin.include_role:
+        name: "rsyslog-install"
