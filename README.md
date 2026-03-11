@@ -3,17 +3,18 @@ My Ansible setup, without all my configs. I hope
 
 ## Start here
 
-```
-echo -e "\x1b[0;31mYou need an environment setup...\x1b[0m"
+Run the below code to get a python environment setup
+
+```bash
 python3.10 -m venv .venv
 source .venv/bin/activate
 python3.10 -m pip install --upgrade pip
 python3.10 -m pip install -r requirements.txt
 ansible-galaxy install -r requirements.yml
-echo -e "\x1b[0;33mthere, its all done\x1b[0m"
-
-alias testing='$(git rev-parse --show-toplevel)/testing/test.sh'
 ```
+
+Now you will need to build out your inventory with all your hosts,
+then make changes to configs with real hostnames/IPs.
 
 # Testing on Proxmox
 

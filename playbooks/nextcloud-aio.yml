@@ -1,0 +1,30 @@
+---
+- name: Build PHP server
+  hosts: php
+  remote_user: root
+  pre_tasks:
+    - name: Make dir for NFS
+      ansible.builtin.file:
+        path: /var/lib/nextcloud_data/
+        state: directory
+        mode: '0775'
+        owner: www-data
+        group: www-data
+  roles:
+    - role: nginx
+      vars:
+        enable_all: true
+        update_config: true
+        nginx_config_template: php
+    - role: php
+    - role: mysql
+
+- name: Build Internet Nginx server
+  hosts: nginx
+  remote_user: root
+  roles:
+    - role: nginx
+      vars:
+        enable_all: true
+        update_config: true
+        nginx_config_template: nginx
